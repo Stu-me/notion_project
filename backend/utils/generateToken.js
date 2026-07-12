@@ -1,0 +1,1 @@
+// we wrote the generate token in the register controller not a good way but again we will see in future 
