@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import api from '../api/axios'
-
+import { workspaceService } from '../services/workspaceService'
+import { pageService } from '../services/pageService'
 
 function DashboardPage() {
   const [workspaces, setWorkspaces] = useState([])
@@ -23,7 +23,7 @@ function DashboardPage() {
   const fetchWorkspaces = async () => {
     setLoading(true)
     try {
-      const res = await api.get('/api/workspaces')
+      const res = await workspaceService.getAll()   // was: api.get('/api/workspaces')
       setWorkspaces(res.data)
       if (res.data.length > 0) {
         selectWorkspace(res.data[0])
@@ -41,7 +41,7 @@ function DashboardPage() {
   const selectWorkspace = async (workspace) => {
     setActiveWorkspace(workspace)
     try {
-      const res = await api.get('/api/pages')
+      const res = await pageService.getAll()
       const filtered = res.data.filter((p) => p.workspace === workspace._id)
       setPages(filtered)
     } catch (err) {
@@ -54,7 +54,7 @@ function DashboardPage() {
     if (!newWorkspaceName.trim()) return
 
     try {
-      const res = await api.post('/api/workspaces', { name: newWorkspaceName })
+      const res = await workspaceService.create({ name: newWorkspaceName })   // was: api.post(...)
       setWorkspaces([...workspaces, res.data])
       setNewWorkspaceName('')
       selectWorkspace(res.data)
@@ -67,7 +67,7 @@ function DashboardPage() {
     if (!confirm('Delete this workspace? This cannot be undone.')) return
 
     try {
-      await api.delete(`/api/workspaces/${id}`)
+      await workspaceService.delete(id)   // was: api.delete(...)
       const updated = workspaces.filter((w) => w._id !== id)
       setWorkspaces(updated)
       if (activeWorkspace?._id === id) {
@@ -85,7 +85,7 @@ function DashboardPage() {
     if (!newPageTitle.trim() || !activeWorkspace) return
 
     try {
-      const res = await api.post('/api/pages', {
+      const res = await pageService.create({
         title: newPageTitle,
         workspace: activeWorkspace._id,
       })
@@ -100,7 +100,7 @@ function DashboardPage() {
     if (!confirm('Delete this page?')) return
 
     try {
-      await api.delete(`/api/pages/${id}`)
+      await pageService.delete(id)
       setPages(pages.filter((p) => p._id !== id))
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to delete page')

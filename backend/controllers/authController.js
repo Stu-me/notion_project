@@ -93,7 +93,7 @@ const userInfo = asyncHandler(async(req,res)=>{
 //@route POST /forgotpassword
 //@access public
 
-const forgotPassword = asyncHandler(async(req,res)=>{
+const  forgotPassword = asyncHandler(async(req,res)=>{
 
     const {email} = req.body; // as he forgot password we take his email
     

@@ -2,6 +2,7 @@ import { useState  } from 'react'
 import { useNavigate,Link } from 'react-router-dom'
 import api from '../api/axios'
 import { useAuth } from '../context/AuthContext'
+import { authService } from '../services/authService'
 
 function LoginPage() {
   const [formData, setFormData] = useState({ email: '', password: '' })
@@ -21,7 +22,7 @@ function LoginPage() {
     setLoading(true)
 
     try {
-      const response = await api.post('/api/auth/login', formData)
+      const response = await authService.login(formData)
       login(response.data, response.data.token)
       navigate('/dashboard', { replace: true })
     } catch (err) {

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate ,Link } from 'react-router-dom'
-import api from '../api/axios'
+import { authService } from '../services/authService'
 import { useAuth } from '../context/AuthContext'
 
 function RegisterPage() {
@@ -21,7 +21,7 @@ function RegisterPage() {
     setLoading(true)
 
     try {
-      const response = await api.post('/api/auth/register', formData)
+      const response = await authService.register(formData)
       login(response.data, response.data.token)
       navigate('/dashboard', { replace: true })
     } catch (err) {

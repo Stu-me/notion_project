@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import api from '../api/axios'
+import { pageService } from '../services/pageService'
+import { blockService } from '../services/blockService'
 
 const BLOCK_TYPES = ['text', 'heading', 'todo', 'image']
 
@@ -20,10 +21,10 @@ function PageEditor() {
   const fetchPage = async () => {
     setLoading(true)
     try {
-      const pageRes = await api.get(`/api/pages/${id}`)
+      const pageRes = await pageService.getById(id)
       setPage(pageRes.data)
 
-      const blocksRes = await api.get(`/api/blocks/${id}`)
+      const blocksRes = await blockService.getAllForPage(id)
       setBlocks(blocksRes.data)
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to load page')
@@ -34,7 +35,7 @@ function PageEditor() {
 
   const handleAddBlock = async (type = 'text') => {
     try {
-      const res = await api.post(`/api/blocks/${id}`, {
+      const res = await blockService.create(id, {
         type,
         content: '',
       })
@@ -54,7 +55,7 @@ function PageEditor() {
   // Fires on blur — this is when we actually save to backend
   const handleBlockSave = async (block) => {
     try {
-      await api.put(`/api/blocks/${block._id}`, {
+      await blockService.update(block._id, {
         content: block.content,
         type: block.type,
       })
@@ -67,7 +68,7 @@ function PageEditor() {
     const updated = { ...block, type: newType }
     setBlocks(blocks.map((b) => (b._id === block._id ? updated : b)))
     try {
-      await api.put(`/api/blocks/${block._id}`, {
+      await blockService.update(block._id, {
         content: block.content,
         type: newType,
       })
@@ -78,7 +79,7 @@ function PageEditor() {
 
   const handleDeleteBlock = async (blockId) => {
     try {
-      await api.delete(`/api/blocks/${blockId}`)
+      await blockService.delete(blockId)
       setBlocks(blocks.filter((b) => b._id !== blockId))
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to delete block')
@@ -88,7 +89,7 @@ function PageEditor() {
   const handleTitleBlur = async (newTitle) => {
     if (newTitle === page.title) return
     try {
-      const res = await api.put(`/api/pages/${id}`, { title: newTitle })
+      const res = await pageService.update(id, { title: newTitle })
       setPage(res.data)
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to update title')
