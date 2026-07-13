@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate ,Link } from 'react-router-dom'
 import { authService } from '../services/authService'
-import { useAuth } from '../context/AuthContext'
+import { useAuth } from '../hooks/useAuth'
 
 function RegisterPage() {
   const [formData, setFormData] = useState({ name: '', email: '', password: '' })
@@ -68,7 +68,7 @@ function RegisterPage() {
           value={formData.password}
           onChange={handleChange}
           required
-          minLength={6}
+          minLength={8}
           className="w-full mb-4 p-2 border rounded"
         />
 

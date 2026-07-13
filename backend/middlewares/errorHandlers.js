@@ -1,6 +1,13 @@
 const HTTP_STATUS_CODES = require('../constants');
 
 const errorHandler = (err, req, res, next)=>{
+    if (err.name === 'ZodError') {
+        return res.status(HTTP_STATUS_CODES.BAD_REQUEST).json({
+            title: 'Bad Request',
+            message: 'Please provide valid input',
+        });
+    }
+
     const statusCode = res.statusCode !== 200 ? res.statusCode : HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR;
 
     switch(statusCode){
@@ -9,7 +16,7 @@ const errorHandler = (err, req, res, next)=>{
                 title:'Bad Request',
                 message:err.message
             });
-        case HTTP_STATUS_CODES.UNAUTHORIZED_ACCESS:
+        case HTTP_STATUS_CODES.UNAUTHORIZED:
             return res.status(statusCode).json({
                 title:'Unauthorized',
                 message:err.message

@@ -5,5 +5,5 @@ export const blockService = {
   create: (pageId, data) => api.post(`/api/blocks/${pageId}`, data),
   update: (id, data) => api.put(`/api/blocks/${id}`, data),
   delete: (id) => api.delete(`/api/blocks/${id}`),
-  reorder: (blockIds) => api.patch('/api/blocks/reorder', { blocks: blockIds }),
+  reorder: (pageId, blockIds) => api.patch(`/api/blocks/reorder/${pageId}`, { blocks: blockIds }),
 }

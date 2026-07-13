@@ -1,4 +1,6 @@
-  const Workspace = require("../models/workspaceModel");
+const Workspace = require("../models/workspaceModel");
+const Page = require("../models/pageModel");
+const Block = require("../models/blockModel");
 const asyncHandler = require("express-async-handler");
 
 //  here we have to work with database so we must have the model
@@ -9,11 +11,11 @@ const asyncHandler = require("express-async-handler");
 // @access private
 const getWorkspaces = asyncHandler(async (req, res) => {
   //in getWorkspaces we need to bringout all the pages saved in that workspace
-  const { _id } = req.user;
+  const ownerId = req.user._id;
   // const validUser = await Workspace.find({owner}) // return all  ids the workspcaces
   //of the owner which we have given the common ids for user and workspace
   // we want the pages not the reference so we need to populate or say value stored on those pointers
-  const workspaces = await Workspace.find({ _id }).populate("pages");
+  const workspaces = await Workspace.find({ owner: ownerId }).populate("pages");
 
   // workspaces is an ARRAY of workspace objects — arrays don't have .pages
   return res.status(200).json(workspaces);
@@ -23,9 +25,15 @@ const getWorkspaces = asyncHandler(async (req, res) => {
 // @route POST /workspaces
 // @access private
 const createWorkspaces = asyncHandler(async (req, res) => {
+  const name = req.body.name?.trim();
+  if (!name) {
+    res.status(400);
+    throw new Error("Workspace name is required");
+  }
+
   // just create new workspace with name and assinged to an owner
   const workspace = await Workspace.create({
-    name: req.user.name,
+    name,
     owner: req.user._id,
   });
   res.status(201).json(workspace);
@@ -49,9 +57,14 @@ const updateWorkspaces = asyncHandler(async (req, res) => {
     res.status(403);
     throw new Error("Unauthorized access");
   }
-  const updated = await Workspace.findbyIdAndUpdate(
+  const name = req.body.name?.trim();
+  if (!name) {
+    res.status(400);
+    throw new Error("Workspace name is required");
+  }
+  const updated = await Workspace.findByIdAndUpdate(
     id, //id for finiding
-    { name: req.body.name }, // what to update - remember we cant update pages here
+    { name }, // what to update - remember we cant update pages here
     { new: true }, // sends updated data to frontend
   );
   return res.status(200).json(updated);
@@ -71,7 +84,12 @@ const deleteWorkspaces = asyncHandler(async(req, res) => {
       res.status(403);
       throw new Error("You dont have ownership access");
     }
-    const deleted = await Workspace.findbyIdAndDelete(id);
+    const pages = await Page.find({ workspace: id }).select("_id");
+    const pageIds = pages.map((page) => page._id);
+
+    await Block.deleteMany({ page: { $in: pageIds } });
+    await Page.deleteMany({ workspace: id });
+    await Workspace.findByIdAndDelete(id);
 
     return res.status(200).json({message:"workspace deleted successfully "})
 })

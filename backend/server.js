@@ -1,4 +1,5 @@
 const express = require('express');
+const cors = require('cors');
 require('dotenv').config()
 const app = express();
 
@@ -10,6 +11,7 @@ const errorHandler = require('./middlewares/errorHandlers');
 
 
 app.use(express.json())
+app.use(cors())
 app.get('/',(req,res)=>{
     res.json({message:" server started see for api for auth , workspaces , pages ,blocks"})
 })

@@ -1,7 +1,7 @@
 import api from '../api/axios'
 
 export const pageService = {
-  getAll: () => api.get('/api/pages'),
+  getAll: (workspaceId) => api.get('/api/pages', { params: { workspaceId } }),
   getById: (id) => api.get(`/api/pages/${id}`),
   create: (data) => api.post('/api/pages', data),
   update: (id, data) => api.put(`/api/pages/${id}`, data),

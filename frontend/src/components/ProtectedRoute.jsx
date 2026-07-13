@@ -1,5 +1,5 @@
 import { Navigate } from "react-router-dom";
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 
 const ProtectedRoute = ({children}) =>{
     const {user,loading} = useAuth(); // get the auth state from the context 
@@ -16,4 +16,4 @@ const ProtectedRoute = ({children}) =>{
     return children
 }
 
-export default ProtectedRoute 
+export default ProtectedRoute

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { workspaceService } from '../services/workspaceService'
 import { pageService } from '../services/pageService'
@@ -16,38 +16,39 @@ function DashboardPage() {
 
   const navigate = useNavigate()
 
-  useEffect(() => {
-    fetchWorkspaces()
+  const selectWorkspace = useCallback(async (workspace) => {
+    setActiveWorkspace(workspace)
+    try {
+      const res = await pageService.getAll(workspace._id)
+      setPages(res.data)
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to load pages')
+    }
   }, [])
 
-  const fetchWorkspaces = async () => {
+  const fetchWorkspaces = useCallback(async () => {
     setLoading(true)
     try {
       const res = await workspaceService.getAll()   // was: api.get('/api/workspaces')
       setWorkspaces(res.data)
       if (res.data.length > 0) {
-        selectWorkspace(res.data[0])
+        await selectWorkspace(res.data[0])
       }
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to load workspaces')
     } finally {
       setLoading(false)
     }
-  }
+  }, [selectWorkspace])
 
   // NOTE: assumes GET /api/pages returns pages for the logged-in user,
   // and each page has a `workspace` field you can filter on client-side.
   // If your backend supports GET /api/pages?workspace=<id>, swap this to use that instead — cleaner.
-  const selectWorkspace = async (workspace) => {
-    setActiveWorkspace(workspace)
-    try {
-      const res = await pageService.getAll()
-      const filtered = res.data.filter((p) => p.workspace === workspace._id)
-      setPages(filtered)
-    } catch (err) {
-      setError(err.response?.data?.message || 'Failed to load pages')
-    }
-  }
+  useEffect(() => {
+    // This starts an asynchronous API request; its state updates happen after it resolves.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void fetchWorkspaces()
+  }, [fetchWorkspaces])
 
   const handleCreateWorkspace = async (e) => {
     e.preventDefault()

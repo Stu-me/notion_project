@@ -164,7 +164,7 @@ Blocks:
 
 Important note:
 
-- The current reset email link is hardcoded to `http://localhost:8000/api/auth/resetpassword/:token`. Update that URL when you deploy or if your backend runs on a different port.
+- Password-reset emails use `FRONTEND_URL` when set, otherwise `http://localhost:5173`, and link to `/reset-password/:token` in the frontend.
 
 ## Frontend Flow
 
@@ -210,6 +210,7 @@ JWT_SECRET=your_jwt_secret
 EMAIL_USER=your_smtp_user
 EMAIL_PASS=your_smtp_password
 PORT=5000
+FRONTEND_URL=http://localhost:5173
 ```
 
 Frontend environment variables in `frontend/.env`:
@@ -246,7 +247,7 @@ npm run dev
 2. Implement the register page and connect it to the auth API.
 3. Build the page editor UI for creating, editing, and reordering blocks.
 4. Move repeated API calls into a small frontend service layer.
-5. Replace the hardcoded reset-password URL with an environment-based URL.
+5. Configure `FRONTEND_URL` for the deployed frontend before enabling password-reset emails.
 
 ## Summary
 

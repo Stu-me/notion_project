@@ -1,7 +1,6 @@
 import { useState  } from 'react'
 import { useNavigate,Link } from 'react-router-dom'
-import api from '../api/axios'
-import { useAuth } from '../context/AuthContext'
+import { useAuth } from '../hooks/useAuth'
 import { authService } from '../services/authService'
 
 function LoginPage() {
@@ -70,8 +69,12 @@ function LoginPage() {
           {loading ? 'Logging in...' : 'Log in'}
         </button>
 
+        <p className="text-sm mt-3 text-center">
+          <Link to="/forgot-password" className="underline">Forgot password?</Link>
+        </p>
+
         <p className="text-sm mt-4 text-center">
-          No account? <a href="/register" className="underline">Register</a>
+          No account? <Link to="/register" className="underline">Register</Link>
         </p>
       </form>
     </div>

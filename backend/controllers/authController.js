@@ -117,7 +117,8 @@ const  forgotPassword = asyncHandler(async(req,res)=>{
     await user.save(); // this line act as user.update() for the user. changes we did 
 
     //email the token 
-    const resetURL = `http://localhost:8000/api/auth/resetpassword/${resetToken}`
+    const clientUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const resetURL = `${clientUrl}/reset-password/${resetToken}`;
     const message = `
     You requested password reset.
     
@@ -153,6 +154,11 @@ const  forgotPassword = asyncHandler(async(req,res)=>{
 
 const resetPassword  = asyncHandler(async(req,res)=>{
     const {password} = req.body;
+
+    if (!password || password.length < 8) {
+        res.status(400);
+        throw new Error('Password must be at least 8 characters long');
+    }
     
     console.log("yeah working")
     // as we have token we hash it to check if it is same 

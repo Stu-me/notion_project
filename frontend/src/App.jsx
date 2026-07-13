@@ -8,6 +8,8 @@ import {
 import DashBoardPage from "./pages/DashboardPage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
+import ForgotPasswordPage from "./pages/ForgotPasswordPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
 import PageEditor from "./pages/PageEditor";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Navbar from "./components/navbar";
@@ -30,6 +32,8 @@ function App() {
           {/* we use navigat in the  / cause dashboard is protected and if we simply  <dashboard people will surpass the authentication > */}
             <Route path="/login" element={<LoginPage></LoginPage>} />
             <Route path="/register" element={<RegisterPage></RegisterPage>} />
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+            <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
 
           <Route element={<Layout /> }>
             <Route path="/" element={<Navigate to="/dashboard"></Navigate>} />

@@ -30,6 +30,7 @@ api.interceptors.response.use(
         // if 401 — token expired — clear storage, redirect to login
         if(error.response && error.response.status === 401){
             localStorage.removeItem('token'); // remove the expired token 
+            localStorage.removeItem('user');
             window.location.href = '/login';
         }
         return Promise.reject(error);

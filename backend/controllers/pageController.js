@@ -1,5 +1,6 @@
 const Page = require('../models/pageModel'); // for db op on page data
 const Workspace = require('../models/workspaceModel')
+const Block = require('../models/blockModel')
 const asyncHandler = require('express-async-handler');
 
 // @desc Get a single page by id
@@ -24,11 +25,23 @@ const getPage = asyncHandler(async(req,res)=>{
 // @route GET /pages?workspaceId=<workspaceId>
 // @access private
 const getAllPages = asyncHandler(async(req,res)=>{
+    const filter = { createdBy: req.user._id };
 
-    const pages = await Page.find({
-        createdBy:req.user._id,
-        workspace:req.query.workspaceId // passed as query param from frontend
-    });
+    if (req.query.workspaceId) {
+        const workspace = await Workspace.findOne({
+            _id: req.query.workspaceId,
+            owner: req.user._id,
+        });
+
+        if (!workspace) {
+            res.status(404);
+            throw new Error('Workspace not found');
+        }
+
+        filter.workspace = workspace._id;
+    }
+
+    const pages = await Page.find(filter);
     //only returns the pages of that user who is logged in  and what the workspace he need
     return res.status(200).json(pages);
 })
@@ -38,14 +51,30 @@ const getAllPages = asyncHandler(async(req,res)=>{
 // @route POST /pages
 // @access private
 const createPage = asyncHandler(async(req,res)=>{
+    const title = req.body.title?.trim();
+    if (!title) {
+        res.status(400);
+        throw new Error('Page title is required');
+    }
+
+    const workspace = await Workspace.findOne({
+        _id: req.body.workspace,
+        owner: req.user._id,
+    });
+
+    if (!workspace) {
+        res.status(404);
+        throw new Error('Workspace not found');
+    }
+
     const createdPage = await Page.create({
-        title:req.body.title,
-        workspace:req.body.workspace,
+        title,
+        workspace:workspace._id,
         // we are not using blocks here cause mongoose by default will assing the array
         createdBy:req.user._id
     });
     await Workspace.findByIdAndUpdate(
-        req.body.workspace, // id 
+        workspace._id,
         {$push:{pages:createdPage._id}} // data adding already existed array 
     )
     return res.status(201).json(createdPage)
@@ -66,9 +95,14 @@ const updatePage = asyncHandler(async(req,res)=>{
        res.status(403);
        throw new Error("You are not authorized to access this page");
     }
+    const title = req.body.title?.trim();
+    if (!title) {
+        res.status(400);
+        throw new Error('Page title is required');
+    }
     const updatedPage = await Page.findByIdAndUpdate(
         id,
-        {title:req.body.title},
+        {title},
         {new:true}
     );
      return res.status(200).json(updatedPage)
@@ -88,6 +122,7 @@ const deletePage = asyncHandler(async(req,res)=>{
        res.status(403);
        throw new Error("You are not authorized to access this page");
     }
+    await Block.deleteMany({ page: id });
     await Page.findByIdAndDelete(id);
     await Workspace.findByIdAndUpdate(
         page.workspace,
