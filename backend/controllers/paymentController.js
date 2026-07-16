@@ -1,13 +1,18 @@
 const asyncHandler = require('express-async-handler');
 const PaymentRequest = require('../models/paymentRequestModel');
 const Subscription = require('../models/subscriptionModel');
-const { getPlan } = require('../config/subscriptionPlans');
+const { SUBSCRIPTION_PLANS, FREE_TIER, getPlan } = require('../config/subscriptionPlans');
 
 // Calculates the expiration date for the plan selected by an approved payment.
 const addDays = (date, days) => {
   const result = new Date(date);
   result.setDate(result.getDate() + days);
   return result;
+};
+
+// Returns trusted plan prices and durations for the subscription page.
+const getSubscriptionPlans = (req, res) => {
+  return res.status(200).json({ free: FREE_TIER, paidPlans: SUBSCRIPTION_PLANS });
 };
 
 // Lets an authenticated user submit a bank/UPI transaction for manual review.
@@ -169,6 +174,7 @@ const suspendSubscription = asyncHandler(async (req, res) => {
 });
 
 module.exports = {
+  getSubscriptionPlans,
   createManualPaymentRequest,
   getMyPaymentRequests,
   getMySubscription,

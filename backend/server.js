@@ -8,10 +8,12 @@ dbConnection(); // database connected
 
 const port = process.env.PORT || 5000;
 const errorHandler = require('./middlewares/errorHandlers');
+const requestTiming = require('./middlewares/requestTiming');
 
 
 app.use(express.json())
 app.use(cors())
+app.use(requestTiming)
 app.get('/',(req,res)=>{
     res.json({message:" server started see for api for auth , workspaces , pages ,blocks"})
 })

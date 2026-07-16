@@ -10,12 +10,9 @@ const asyncHandler = require("express-async-handler");
 // @route GET /workspaces
 // @access private
 const getWorkspaces = asyncHandler(async (req, res) => {
-  //in getWorkspaces we need to bringout all the pages saved in that workspace
   const ownerId = req.user._id;
-  // const validUser = await Workspace.find({owner}) // return all  ids the workspcaces
-  //of the owner which we have given the common ids for user and workspace
-  // we want the pages not the reference so we need to populate or say value stored on those pointers
-  const workspaces = await Workspace.find({ owner: ownerId }).populate("pages");
+  // The dashboard fetches pages only for the selected workspace, so avoid loading every page here.
+  const workspaces = await Workspace.find({ owner: ownerId });
 
   // workspaces is an ARRAY of workspace objects — arrays don't have .pages
   return res.status(200).json(workspaces);

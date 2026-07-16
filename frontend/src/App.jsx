@@ -10,6 +10,7 @@ import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
+import SubscribePage from "./pages/SubscribePage";
 import PageEditor from "./pages/PageEditor";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Navbar from "./components/navbar";
@@ -45,6 +46,15 @@ function App() {
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/subscribe"
+              element={
+                <ProtectedRoute>
+                  <SubscribePage />
+                </ProtectedRoute>
+              }
+            />
+            <Route path="/subscription" element={<Navigate to="/subscribe" replace />} />
             <Route
               path="/page/:id"
               element={

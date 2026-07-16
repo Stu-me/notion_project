@@ -18,4 +18,7 @@ const workSpaceSchema = mongoose.Schema({
     timestamps:true
 });
 
+// Supports loading all workspaces owned by the current user.
+workSpaceSchema.index({ owner: 1 });
+
 module.exports = mongoose.model('Workspace',workSpaceSchema)

@@ -24,5 +24,7 @@ const pageSchema = mongoose.Schema({
     timestamps:true
 })
 
+// Supports page listing and free-tier page counting for a workspace.
+pageSchema.index({ createdBy: 1, workspace: 1 });
 
 module.exports = mongoose.model('Page',pageSchema);

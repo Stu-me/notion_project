@@ -22,5 +22,9 @@ const blockSchema = mongoose.Schema({
 {
     timestamps:true
 })
+
+// Supports ordered block reads and free-tier block counting for a page.
+blockSchema.index({ page: 1, order: 1 });
+
  // every piece of information on the page is block
 module.exports = mongoose.model('Block',blockSchema);

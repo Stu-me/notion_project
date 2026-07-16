@@ -33,6 +33,15 @@ api.interceptors.response.use(
             localStorage.removeItem('user');
             window.location.href = '/login';
         }
+        // Free-plan limits send users to the upgrade screen with the limit that was reached.
+        if (
+            error.response?.status === 403 &&
+            error.response?.data?.code === 'FREE_PLAN_LIMIT_REACHED' &&
+            window.location.pathname !== '/subscribe'
+        ) {
+            const { resource, limit } = error.response.data;
+            window.location.href = `/subscribe?reason=free-limit&resource=${encodeURIComponent(resource)}&limit=${encodeURIComponent(limit)}`;
+        }
         return Promise.reject(error);
     }
 )

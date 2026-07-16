@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { workspaceService } from '../services/workspaceService'
 import { pageService } from '../services/pageService'
 
@@ -157,6 +157,12 @@ function DashboardPage() {
         {/* Main — pages */}
         <div className="flex-1 p-6">
           {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
+
+          <div className="flex items-center justify-end mb-4">
+            <Link to="/subscribe" className="text-sm rounded border px-3 py-1.5 hover:bg-gray-50">
+              Manage subscription
+            </Link>
+          </div>
 
           {!activeWorkspace ? (
             <p className="text-gray-500">Create or select a workspace to get started.</p>
