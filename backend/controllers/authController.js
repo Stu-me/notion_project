@@ -44,6 +44,7 @@ const registerUser = asyncHandler(async(req,res)=>{
         _id:newUser._id,
         name:name,
         email:email,
+        role: newUser.role,
         token:generateToken(newUser._id)
     });
 });
@@ -75,6 +76,7 @@ const loginUser = asyncHandler(async(req,res)=>{
         _id:validUser._id,
         name:validUser.name,
         email:validUser.email,
+        role: validUser.role,
         token
     });
 });

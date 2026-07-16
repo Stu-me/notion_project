@@ -1,5 +1,4 @@
 const mongoose = require("mongoose");
-const { string } = require("zod");
 
 const userSchema = mongoose.Schema(
   {
@@ -23,7 +22,12 @@ const userSchema = mongoose.Schema(
       type:Date
     },
     currentStreak: { type: Number, default: 0 },
-    lastActiveDate: { type: Date }
+    lastActiveDate: { type: Date },
+    role: {
+      type: String,
+      enum: ['user', 'masterAdmin'],
+      default: 'user',
+    },
   },
   {
     timestamps: true,

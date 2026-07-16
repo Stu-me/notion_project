@@ -19,6 +19,8 @@ app.use('/api/auth',require('./routers/authRouters'));
 app.use('/api/workspaces',require('./routers/workspacesRouters'));
 app.use('/api/pages',require('./routers/pagesRouters'));
 app.use('/api/blocks',require('./routers/blocksRouters'));
+app.use('/api/payments', require('./routers/paymentRouters'));
+app.use('/api/admin', require('./routers/adminRouters'));
 
 
 
