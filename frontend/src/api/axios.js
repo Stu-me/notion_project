@@ -13,7 +13,7 @@ api.interceptors.request.use((config)=>{
     // get token from localStorage - localStorage is browser persistent storage (survives even browser restart)
     // if exists — attach to Authorization header
     // return config
-    const token = localStorage.getItem('token'); 
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
 
     // we check is token exists
     if(token){
@@ -31,6 +31,8 @@ api.interceptors.response.use(
         if(error.response && error.response.status === 401){
             localStorage.removeItem('token'); // remove the expired token 
             localStorage.removeItem('user');
+            sessionStorage.removeItem('token');
+            sessionStorage.removeItem('user');
             window.location.href = '/login';
         }
         // Free-plan limits send users to the upgrade screen with the limit that was reached.

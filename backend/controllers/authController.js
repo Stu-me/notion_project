@@ -6,14 +6,16 @@ const jwt = require('jsonwebtoken')
 const sendEmail = require('../utils/sendEmail')
 const {userInputValidator,userLoginValidator} = require('../middlewares/userValidator');
 const { log } = require('console');
+const remeberTime = '30'
 
 // will put in utility folder after checking the flow 
 
-const generateToken = (id)=>{
+// Creates a short session by default or a longer trusted-device session for Remember Me.
+const generateToken = (id, expiresIn = remeberTime)=>{
     return jwt.sign(
         {id},                       // payload
         process.env.JWT_SECRET,     // secret signature 
-        {expiresIn:'10m'}
+        {expiresIn}
     )
 }
 
@@ -71,7 +73,8 @@ const loginUser = asyncHandler(async(req,res)=>{
         throw new Error('invalid credentials');
     }
     
-    const token = generateToken(validUser._id);
+    // Only a literal true enables the longer session; client input cannot change roles or permissions.
+    const token = generateToken(validUser._id, req.body.rememberMe === true ? '30d' : remeberTime);
     res.status(200).json({
         _id:validUser._id,
         name:validUser.name,

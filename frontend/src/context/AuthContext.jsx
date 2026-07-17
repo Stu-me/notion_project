@@ -1,35 +1,48 @@
 import { useState } from 'react'
 import AuthContext from './authContext'
 
+// Restores a persistent "remember me" session first, then a tab-only session.
 function getStoredSession() {
-  try {
-    const token = localStorage.getItem('token')
-    const storedUser = localStorage.getItem('user')
-    if (!token || !storedUser) return { token: null, user: null }
+  const storageOptions = [localStorage, sessionStorage]
 
-    return { token, user: JSON.parse(storedUser) }
-  } catch {
-    localStorage.removeItem('token')
-    localStorage.removeItem('user')
-    return { token: null, user: null }
+  for (const storage of storageOptions) {
+    try {
+      const token = storage.getItem('token')
+      const storedUser = storage.getItem('user')
+      if (token && storedUser) return { token, user: JSON.parse(storedUser) }
+    } catch {
+      storage.removeItem('token')
+      storage.removeItem('user')
+    }
   }
+
+  return { token: null, user: null }
 }
 
 export function AuthProvider({ children }) {
   const [session, setSession] = useState(getStoredSession)
 
-  const login = (userData, token) => {
+  // Stores a session permanently or only for the current browser tab based on Remember Me.
+  const login = (userData, token, rememberMe = true) => {
     const user = { ...userData }
     delete user.token
+    const targetStorage = rememberMe ? localStorage : sessionStorage
+    const otherStorage = rememberMe ? sessionStorage : localStorage
+
+    otherStorage.removeItem('token')
+    otherStorage.removeItem('user')
+    targetStorage.setItem('token', token)
+    targetStorage.setItem('user', JSON.stringify(user))
     setSession({ token, user })
-    localStorage.setItem('token', token)
-    localStorage.setItem('user', JSON.stringify(user))
   }
 
+  // Clears both storage types so logout always removes the active session.
   const logout = () => {
     setSession({ token: null, user: null })
     localStorage.removeItem('token')
     localStorage.removeItem('user')
+    sessionStorage.removeItem('token')
+    sessionStorage.removeItem('user')
     window.location.href = '/login'
   }
 

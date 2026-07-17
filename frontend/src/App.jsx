@@ -56,7 +56,7 @@ function App() {
                 </ProtectedRoute>
               }
             />
-            <Route path="/subscription" element={<Navigate to="/subs  cribe" replace />} />
+            <Route path="/subscription" element={<Navigate to="/subscribe" replace />} />
             <Route
               path="/admin/payments"
               element={
