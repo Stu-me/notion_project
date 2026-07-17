@@ -11,8 +11,10 @@ import RegisterPage from "./pages/RegisterPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import SubscribePage from "./pages/SubscribePage";
+import AdminPaymentsPage from "./pages/AdminPaymentsPage";
 import PageEditor from "./pages/PageEditor";
 import ProtectedRoute from "./components/ProtectedRoute";
+import AdminRoute from "./components/AdminRoute";
 import Navbar from "./components/navbar";
 
 function Layout() {
@@ -54,7 +56,15 @@ function App() {
                 </ProtectedRoute>
               }
             />
-            <Route path="/subscription" element={<Navigate to="/subscribe" replace />} />
+            <Route path="/subscription" element={<Navigate to="/subs  cribe" replace />} />
+            <Route
+              path="/admin/payments"
+              element={
+                <AdminRoute>
+                  <AdminPaymentsPage />
+                </AdminRoute>
+              }
+            />
             <Route
               path="/page/:id"
               element={

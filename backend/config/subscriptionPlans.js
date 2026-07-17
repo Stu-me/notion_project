@@ -10,7 +10,7 @@ const FREE_TIER = Object.freeze({
   limits: {
     workspaces: 3,
     pagesPerWorkspace: 5,
-    blocksPerPage: 50,
+    blocksPerPage: 20,
   },
   // All current block types remain free. Add future premium-only types separately.
   blockTypes: ['text', 'heading', 'todo', 'image'],

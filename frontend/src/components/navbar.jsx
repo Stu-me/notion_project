@@ -11,6 +11,8 @@ function Navbar() {
       <div className="flex items-center gap-4">
         {user && <span className="text-sm text-gray-600">{user.name}</span>}
         <Link to="/subscribe" className="text-sm text-gray-600 hover:underline">Subscription</Link>
+        {/* checks if the user is masterAdmin or not  */}
+        {user?.role === 'masterAdmin' && <Link to="/admin/payments" className="text-sm text-gray-600 hover:underline">AdminTask</Link>}
         <button
           onClick={logout}
           className="text-sm bg-gray-100 px-3 py-1.5 rounded hover:bg-gray-200"
