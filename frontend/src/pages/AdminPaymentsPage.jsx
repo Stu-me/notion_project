@@ -105,37 +105,37 @@ function AdminPaymentsPage() {
     }
   }
 
-  if (loading) return <div className="p-6 text-gray-500">Loading admin dashboard...</div>
+  if (loading) return <div className="p-6 text-[var(--text-secondary)]">Loading admin dashboard...</div>
 
   return (
-    <main className="max-w-6xl mx-auto p-6 space-y-8">
-      <section>
-        <p className="text-sm font-medium text-gray-500">Master admin</p>
-        <h1 className="text-3xl font-bold">Payment approvals</h1>
-        <p className="mt-2 text-gray-600">Verify each transaction in your payment account before approving it.</p>
+    <main className="max-w-6xl mx-auto p-6 space-y-8 bg-[var(--bg)] min-h-screen">
+      <section className="bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl p-6 shadow-sm">
+        <p className="text-sm font-medium text-[var(--text-secondary)]">Master admin</p>
+        <h1 className="text-3xl font-bold text-[var(--text-primary)]">Payment approvals</h1>
+        <p className="mt-2 text-[var(--text-secondary)]">Verify each transaction in your payment account before approving it.</p>
       </section>
 
-      {error && <p className="rounded border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</p>}
-      {message && <p className="rounded border border-green-200 bg-green-50 p-3 text-sm text-green-700">{message}</p>}
+      {error && <p className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</p>}
+      {message && <p className="rounded-xl border border-green-200 bg-green-50 p-3 text-sm text-green-700">{message}</p>}
 
-      <section className="rounded-xl border overflow-hidden">
-        <div className="border-b p-5">
-          <h2 className="text-lg font-bold">Pending payment requests</h2>
+      <section className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] shadow-sm overflow-hidden">
+        <div className="border-b border-[var(--border)] p-5">
+          <h2 className="text-lg font-bold text-[var(--text-primary)]">Pending payment requests</h2>
         </div>
         {paymentRequests.length === 0 ? (
-          <p className="p-5 text-sm text-gray-500">No payment requests are waiting for review.</p>
+          <p className="p-5 text-sm text-[var(--text-secondary)]">No payment requests are waiting for review.</p>
         ) : (
-          <div className="divide-y">
+          <div className="divide-y divide-[var(--border)]">
             {paymentRequests.map((request) => (
               <article key={request._id} className="p-5 space-y-4">
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                   <div>
-                    <p className="font-semibold">{request.user?.name || 'Unknown user'} <span className="font-normal text-gray-500">({request.user?.email})</span></p>
-                    <p className="mt-1 text-sm text-gray-600 capitalize">{request.plan} plan · ₹{request.amount}</p>
-                    <p className="mt-1 text-sm text-gray-600">Transaction ID: <span className="font-mono">{request.transactionId}</span></p>
-                    <p className="mt-1 text-sm text-gray-500">Submitted {formatDate(request.createdAt)}</p>
+                    <p className="font-semibold text-[var(--text-primary)]">{request.user?.name || 'Unknown user'} <span className="font-normal text-[var(--text-secondary)]">({request.user?.email})</span></p>
+                    <p className="mt-1 text-sm text-[var(--text-secondary)] capitalize">{request.plan} plan · ₹{request.amount}</p>
+                    <p className="mt-1 text-sm text-[var(--text-secondary)]">Transaction ID: <span className="font-mono">{request.transactionId}</span></p>
+                    <p className="mt-1 text-sm text-[var(--text-secondary)]">Submitted {formatDate(request.createdAt)}</p>
                     {request.proofUrl && (
-                      <a href={request.proofUrl} target="_blank" rel="noreferrer" className="mt-2 inline-block text-sm text-blue-600 underline">
+                      <a href={request.proofUrl} target="_blank" rel="noreferrer" className="mt-2 inline-block text-sm text-[var(--accent)] underline hover:text-[var(--accent-hover)] transition">
                         Open payment proof
                       </a>
                     )}
@@ -149,27 +149,27 @@ function AdminPaymentsPage() {
                       value={rejectionReason}
                       onChange={(event) => setRejectionReason(event.target.value)}
                       placeholder="Optional rejection reason"
-                      className="flex-1 rounded border p-2 text-sm"
+                      className="flex-1 rounded-xl border border-[var(--border)] p-2.5 text-sm text-[var(--text-primary)] placeholder-[var(--text-secondary)] outline-none focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--accent-light)] transition"
                     />
                     <button
                       onClick={() => handleReject(request._id)}
                       disabled={actionLoadingId === request._id}
-                      className="rounded bg-red-600 px-4 py-2 text-sm text-white disabled:opacity-50"
+                      className="rounded-xl bg-red-600 px-4 py-2 text-sm text-[var(--text-on-accent)] font-semibold disabled:opacity-50 hover:bg-red-700 transition"
                     >
                       {actionLoadingId === request._id ? 'Rejecting...' : 'Confirm rejection'}
                     </button>
-                    <button onClick={() => setRejectingId('')} className="rounded border px-4 py-2 text-sm">Cancel</button>
+                    <button onClick={() => setRejectingId('')} className="rounded-xl border border-[var(--border)] px-4 py-2 text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition">Cancel</button>
                   </div>
                 ) : (
                   <div className="flex gap-2">
                     <button
                       onClick={() => handleApprove(request._id)}
                       disabled={actionLoadingId === request._id}
-                      className="rounded bg-black px-4 py-2 text-sm text-white disabled:opacity-50"
+                      className="rounded-xl bg-[var(--btn-primary-bg)] px-5 py-2 text-sm text-[var(--text-on-accent)] font-semibold disabled:opacity-50 hover:bg-[var(--btn-primary-hover)] transition"
                     >
                       {actionLoadingId === request._id ? 'Approving...' : 'Approve'}
                     </button>
-                    <button onClick={() => setRejectingId(request._id)} className="rounded border border-red-300 px-4 py-2 text-sm text-red-700">
+                    <button onClick={() => setRejectingId(request._id)} className="rounded-xl border border-red-300 px-4 py-2 text-sm text-red-700 hover:bg-red-50 transition">
                       Reject
                     </button>
                   </div>
@@ -180,19 +180,19 @@ function AdminPaymentsPage() {
         )}
       </section>
 
-      <section className="rounded-xl border overflow-hidden">
-        <div className="border-b p-5">
-          <h2 className="text-lg font-bold">Current subscriptions</h2>
+      <section className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] shadow-sm overflow-hidden">
+        <div className="border-b border-[var(--border)] p-5">
+          <h2 className="text-lg font-bold text-[var(--text-primary)]">Current subscriptions</h2>
         </div>
         {subscriptions.length === 0 ? (
-          <p className="p-5 text-sm text-gray-500">No active or historical subscriptions yet.</p>
+          <p className="p-5 text-sm text-[var(--text-secondary)]">No active or historical subscriptions yet.</p>
         ) : (
-          <div className="divide-y">
+          <div className="divide-y divide-[var(--border)]">
             {subscriptions.map((subscription) => (
               <article key={subscription._id} className="flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <p className="font-semibold">{subscription.user?.name || 'Unknown user'} <span className="font-normal text-gray-500">({subscription.user?.email})</span></p>
-                  <p className="mt-1 text-sm text-gray-600 capitalize">{subscription.plan} · Ends {formatDate(subscription.endsAt)}</p>
+                  <p className="font-semibold text-[var(--text-primary)]">{subscription.user?.name || 'Unknown user'} <span className="font-normal text-[var(--text-secondary)]">({subscription.user?.email})</span></p>
+                  <p className="mt-1 text-sm text-[var(--text-secondary)] capitalize">{subscription.plan} · Ends {formatDate(subscription.endsAt)}</p>
                 </div>
                 <div className="flex items-center gap-3">
                   <span className={`rounded-full px-3 py-1 text-sm font-medium capitalize ${statusStyle(subscription.status)}`}>{subscription.status}</span>
@@ -200,7 +200,7 @@ function AdminPaymentsPage() {
                     <button
                       onClick={() => handleSuspend(subscription.user._id)}
                       disabled={actionLoadingId === subscription.user._id}
-                      className="rounded border border-red-300 px-3 py-1.5 text-sm text-red-700 disabled:opacity-50"
+                      className="rounded-xl border border-red-300 px-3 py-1.5 text-sm text-red-700 hover:bg-red-50 disabled:opacity-50 transition"
                     >
                       {actionLoadingId === subscription.user._id ? 'Suspending...' : 'Suspend'}
                     </button>

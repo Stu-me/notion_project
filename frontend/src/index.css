@@ -1,1 +1,118 @@
 @import 'tailwindcss';
+
+/* ─── Pandawrite — Kung Fu Panda Theme ───
+ *
+ *  Gold    (#C29336 / #F0C001) — heroism, inner power, Dragon Warrior
+ *  Black   (#141414)            — Po's markings, ink-wash art, yin
+ *  White   (#F2F3F4)            — panda fur, balance, yang
+ *  Jade    (#2D8A6B)            — wisdom, spiritual chi, Master Oogway
+ * ─────────────────────────────────────────── */
+
+:root {
+  /* Backgrounds */
+  --bg: #F2F3F4;
+  --bg-card: #FFFFFF;
+  --bg-elevated: #FFFFFF;
+  --bg-sidebar: #FFFFFF;
+  --bg-hover: #F2F3F4;
+  --bg-nav: #FFFFFF;
+  --bg-input: #FFFFFF;
+
+  /* Text */
+  --text-primary: #141414;
+  --text-secondary: #6B7280;
+  --text-muted: #9CA3AF;
+  --text-on-accent: #FFFFFF;
+
+  /* Gold — primary accent (Dragon Warrior) */
+  --accent: #C29336;
+  --accent-hover: #D4A84B;
+  --accent-light: rgba(194, 147, 54, 0.12);
+  --accent-ring: rgba(194, 147, 54, 0.30);
+
+  /* Jade — secondary accent (Master Oogway) */
+  --jade: #2D8A6B;
+  --jade-light: rgba(45, 138, 107, 0.12);
+
+  /* Borders */
+  --border: #D4D0C5;
+  --border-light: #E8E4DC;
+
+  /* Buttons */
+  --btn-primary-bg: #C29336;
+  --btn-primary-text: #FFFFFF;
+  --btn-primary-hover: #D4A84B;
+  --btn-secondary-bg: #F2F3F4;
+  --btn-secondary-text: #141414;
+  --btn-secondary-border: #D4D0C5;
+
+  /* Shadows */
+  --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.06);
+  --shadow-elevated: 0 10px 25px -5px rgba(0, 0, 0, 0.08);
+
+  /* Nav */
+  --nav-border: #D4D0C5;
+
+  /* Misc */
+  --toggle-bg: #E8E4DC;
+  --toggle-dot: #FFFFFF;
+  --selection: rgba(194, 147, 54, 0.25);
+}
+
+/* ─── Dark Theme — Ink Wash ─── */
+[data-theme='dark'] {
+  --bg: #141414;
+  --bg-card: #1F1F1F;
+  --bg-elevated: #2A2A2A;
+  --bg-sidebar: #1F1F1F;
+  --bg-hover: #2A2A2A;
+  --bg-nav: #1F1F1F;
+  --bg-input: #1F1F1F;
+
+  --text-primary: #F2F3F4;
+  --text-secondary: #9CA3AF;
+  --text-muted: #6B7280;
+  --text-on-accent: #141414;
+
+  --accent: #F0C001;
+  --accent-hover: #FFD633;
+  --accent-light: rgba(240, 192, 1, 0.15);
+  --accent-ring: rgba(240, 192, 1, 0.35);
+
+  --jade: #2D8A6B;
+  --jade-light: rgba(45, 138, 107, 0.20);
+
+  --border: #333333;
+  --border-light: #2A2A2A;
+
+  --btn-primary-bg: #F0C001;
+  --btn-primary-text: #141414;
+  --btn-primary-hover: #FFD633;
+  --btn-secondary-bg: #2A2A2A;
+  --btn-secondary-text: #F2F3F4;
+  --btn-secondary-border: #333333;
+
+  --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.40);
+  --shadow-elevated: 0 10px 25px -5px rgba(0, 0, 0, 0.50);
+
+  --nav-border: #333333;
+
+  --toggle-bg: #333333;
+  --toggle-dot: #F2F3F4;
+  --selection: rgba(240, 192, 1, 0.30);
+}
+
+/* ─── Global resets & transitions ─── */
+* {
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--text-primary);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+::selection {
+  background: var(--selection);
+}

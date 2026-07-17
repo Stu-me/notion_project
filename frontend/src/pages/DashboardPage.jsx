@@ -108,16 +108,16 @@ function DashboardPage() {
     }
   }
 
-  if (loading) return <h1 className="p-6">Loading...</h1>
+  if (loading) return <h1 className="p-6 text-[var(--text-secondary)]">Loading...</h1>
 
   return (
-    <div>
+    <div className="bg-[var(--bg)] min-h-screen">
       
       <div className="flex min-h-screen">
 
         {/* Sidebar — workspaces */}
-        <div className="w-64 border-r bg-gray-50 p-4">
-          <h2 className="font-semibold mb-3">Workspaces</h2>
+        <div className="w-64 border-r border-[var(--border)] bg-[var(--bg-card)] p-4">
+          <h2 className="font-semibold mb-3 text-[var(--text-primary)]">Workspaces</h2>
 
           <form onSubmit={handleCreateWorkspace} className="mb-4">
             <input
@@ -125,9 +125,9 @@ function DashboardPage() {
               placeholder="New workspace"
               value={newWorkspaceName}
               onChange={(e) => setNewWorkspaceName(e.target.value)}
-              className="w-full p-1.5 text-sm border rounded mb-2"
+              className="w-full p-2 text-sm border border-[var(--border)] rounded-xl text-[var(--text-primary)] placeholder-[var(--text-secondary)] outline-none focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--accent-light)] transition mb-2"
             />
-            <button type="submit" className="w-full bg-black text-white text-sm py-1.5 rounded">
+            <button type="submit" className="w-full bg-[var(--btn-primary-bg)] text-[var(--text-on-accent)] text-sm py-2 rounded-xl font-semibold hover:bg-[var(--btn-primary-hover)] transition">
               + Add
             </button>
           </form>
@@ -136,8 +136,8 @@ function DashboardPage() {
             {workspaces.map((ws) => (
               <li
                 key={ws._id}
-                className={`flex justify-between items-center px-2 py-1.5 rounded cursor-pointer text-sm ${
-                  activeWorkspace?._id === ws._id ? 'bg-gray-200 font-medium' : 'hover:bg-gray-100'
+                className={`flex justify-between items-center px-3 py-2 rounded-xl cursor-pointer text-sm transition ${
+                  activeWorkspace?._id === ws._id ? 'bg-[var(--bg)] font-medium text-[var(--text-primary)]' : 'text-[var(--text-secondary)] hover:bg-[var(--bg)] hover:text-[var(--text-primary)]'
                 }`}
               >
                 <span onClick={() => selectWorkspace(ws)} className="flex-1">
@@ -145,7 +145,7 @@ function DashboardPage() {
                 </span>
                 <button
                   onClick={() => handleDeleteWorkspace(ws._id)}
-                  className="text-red-400 hover:text-red-600 text-xs ml-2"
+                  className="text-[var(--text-secondary)] hover:text-[var(--accent)] text-xs ml-2 transition"
                 >
                   ✕
                 </button>
@@ -155,46 +155,46 @@ function DashboardPage() {
         </div>
 
         {/* Main — pages */}
-        <div className="flex-1 p-6">
+        <div className="flex-1 p-8">
           {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
 
-          <div className="flex items-center justify-end mb-4">
-            <Link to="/subscribe" className="text-sm rounded border px-3 py-1.5 hover:bg-gray-50">
+          <div className="flex items-center justify-end mb-6">
+            <Link to="/subscribe" className="text-sm rounded-xl border border-[var(--border)] px-4 py-2 text-[var(--text-secondary)] hover:text-[var(--accent)] hover:border-[var(--accent)] transition bg-[var(--bg-card)]">
               Manage subscription
             </Link>
           </div>
 
           {!activeWorkspace ? (
-            <p className="text-gray-500">Create or select a workspace to get started.</p>
+            <p className="text-[var(--text-secondary)]">Create or select a workspace to get started.</p>
           ) : (
             <>
-              <h1 className="text-xl font-bold mb-4">{activeWorkspace.name}</h1>
+              <h1 className="text-2xl font-bold mb-6 text-[var(--text-primary)]">{activeWorkspace.name}</h1>
 
-              <form onSubmit={handleCreatePage} className="flex gap-2 mb-6">
+              <form onSubmit={handleCreatePage} className="flex gap-2 mb-8">
                 <input
                   type="text"
                   placeholder="New page title"
                   value={newPageTitle}
                   onChange={(e) => setNewPageTitle(e.target.value)}
-                  className="flex-1 p-2 border rounded text-sm"
+                  className="flex-1 p-2.5 border border-[var(--border)] rounded-xl text-[var(--text-primary)] placeholder-[var(--text-secondary)] outline-none focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--accent-light)] transition bg-[var(--bg-card)]"
                 />
-                <button type="submit" className="bg-black text-white px-4 rounded text-sm">
+                <button type="submit" className="bg-[var(--accent)] text-[var(--text-on-accent)] px-5 rounded-xl text-sm font-semibold hover:bg-[var(--accent-hover)] transition">
                   + Page
                 </button>
               </form>
 
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-5">
                 {pages.map((page) => (
                   <div
                     key={page._id}
-                    className="border rounded p-4 hover:shadow cursor-pointer relative"
+                    className="border border-[var(--border)] rounded-xl bg-[var(--bg-card)] p-5 hover:shadow-[var(--shadow-card)] cursor-pointer relative transition group"
                   >
                     <div onClick={() => navigate(`/page/${page._id}`)}>
-                      <p className="font-medium">{page.title}</p>
+                      <p className="font-medium text-[var(--text-primary)]">{page.title}</p>
                     </div>
                     <button
                       onClick={() => handleDeletePage(page._id)}
-                      className="absolute top-2 right-2 text-red-400 hover:text-red-600 text-xs"
+                      className="absolute top-3 right-3 text-[var(--text-secondary)] hover:text-[var(--accent)] text-xs opacity-0 group-hover:opacity-100 transition"
                     >
                       ✕
                     </button>
@@ -203,7 +203,7 @@ function DashboardPage() {
               </div>
 
               {pages.length === 0 && (
-                <p className="text-gray-400 text-sm">No pages yet in this workspace.</p>
+                <p className="text-[var(--text-secondary)] text-sm">No pages yet in this workspace.</p>
               )}
             </>
           )}

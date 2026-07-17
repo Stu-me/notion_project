@@ -32,12 +32,12 @@ function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+    <div className="min-h-screen flex items-center justify-center bg-[var(--bg)]">
       <form
         onSubmit={handleSubmit}
-        className="bg-white p-8 rounded-lg shadow-md w-full max-w-sm"
+        className="bg-[var(--bg-card)] p-8 rounded-xl shadow-[var(--shadow-elevated)] w-full max-w-sm border border-[var(--border)]"
       >
-        <h1 className="text-2xl font-bold mb-6">Create account</h1>
+        <h1 className="text-2xl font-bold mb-6 text-[var(--text-primary)]">Create account</h1>
 
         {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
 
@@ -48,7 +48,7 @@ function RegisterPage() {
           value={formData.name}
           onChange={handleChange}
           required
-          className="w-full mb-3 p-2 border rounded"
+          className="w-full mb-3 p-2.5 border border-[var(--border)] rounded-xl text-[var(--text-primary)] placeholder-[var(--text-secondary)] outline-none focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--accent-light)] transition"
         />
 
         <input
@@ -58,7 +58,7 @@ function RegisterPage() {
           value={formData.email}
           onChange={handleChange}
           required
-          className="w-full mb-3 p-2 border rounded"
+          className="w-full mb-3 p-2.5 border border-[var(--border)] rounded-xl text-[var(--text-primary)] placeholder-[var(--text-secondary)] outline-none focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--accent-light)] transition"
         />
 
         <input
@@ -69,19 +69,19 @@ function RegisterPage() {
           onChange={handleChange}
           required
           minLength={8}
-          className="w-full mb-4 p-2 border rounded"
+          className="w-full mb-4 p-2.5 border border-[var(--border)] rounded-xl text-[var(--text-primary)] placeholder-[var(--text-secondary)] outline-none focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--accent-light)] transition"
         />
 
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-black text-white py-2 rounded disabled:opacity-50"
+          className="w-full bg-[var(--btn-primary-bg)] text-[var(--text-on-accent)] py-2.5 rounded-xl font-semibold transition hover:bg-[var(--btn-primary-hover)] focus:outline-none focus:ring-4 focus:ring-[var(--text-secondary)]/40 disabled:opacity-50"
         >
           {loading ? 'Creating account...' : 'Register'}
         </button>
 
-        <p className="text-sm mt-4 text-center">
-          Already have an account? <Link to ="/login" className="underline" >Log in</Link>
+        <p className="text-sm mt-4 text-center text-[var(--text-secondary)]">
+          Already have an account? <Link to ="/login" className="font-semibold text-[var(--accent)] hover:underline" >Log in</Link>
         </p>
       </form>
     </div>

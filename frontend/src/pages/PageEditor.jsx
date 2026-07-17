@@ -179,15 +179,15 @@ function PageEditor() {
     }
   }
 
-  if (pageLoading) return <h1 className="p-6">Loading...</h1>
-  if (!page) return <h1 className="p-6">Page not found</h1>
+  if (pageLoading) return <h1 className="p-6 text-[var(--text-secondary)]">Loading...</h1>
+  if (!page) return <h1 className="p-6 text-[var(--text-secondary)]">Page not found</h1>
 
   return (
-    <div className="max-w-3xl mx-auto p-6">
-      <div className="flex justify-between items-center mb-4">
+    <div className="max-w-3xl mx-auto p-6 bg-[var(--bg-card)] min-h-screen">
+      <div className="flex justify-between items-center mb-6">
         <button
           onClick={() => navigate('/dashboard')}
-          className="text-sm text-gray-500 hover:underline"
+          className="text-sm text-[var(--text-secondary)] hover:text-[var(--accent)] transition"
         >
           ← Back to dashboard
         </button>
@@ -199,10 +199,10 @@ function PageEditor() {
       <input
         defaultValue={page.title}
         onBlur={(event) => handleTitleBlur(event.target.value)}
-        className="text-3xl font-bold w-full mb-6 outline-none"
+        className="text-4xl font-bold w-full mb-8 outline-none text-[var(--text-primary)] placeholder-[var(--text-secondary)]"
       />
 
-      <div className="space-y-3">
+      <div className="space-y-2">
         {[...blocks]
           .sort((a, b) => a.order - b.order)
           .map((block) => (
@@ -229,12 +229,12 @@ function PageEditor() {
           ))}
       </div>
 
-      <div className="flex gap-2 mt-6">
+      <div className="flex gap-2 mt-8">
         {BLOCK_TYPES.map((type) => (
           <button
             key={type}
             onClick={() => handleAddBlock(type)}
-            className="text-xs border rounded px-2 py-1 hover:bg-gray-100"
+            className="text-xs border border-[var(--border)] rounded-xl px-3 py-1.5 text-[var(--text-secondary)] hover:text-[var(--accent)] hover:border-[var(--accent)] bg-[var(--bg)] transition"
           >
             + {type}
           </button>
@@ -245,9 +245,9 @@ function PageEditor() {
 }
 
 function SaveStatus({ status }) {
-  if (status === 'saving') return <span className="text-xs text-gray-400">Saving...</span>
+  if (status === 'saving') return <span className="text-xs text-[var(--text-secondary)]">Saving...</span>
   if (status === 'error') return <span className="text-xs text-red-500">Save failed</span>
-  return <span className="text-xs text-gray-300">Saved</span>
+  return <span className="text-xs text-[var(--text-muted)]">Saved</span>
 }
 
 export default PageEditor

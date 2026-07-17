@@ -105,48 +105,48 @@ function SubscribePage() {
     }
   }
 
-  if (loading || subscriptionLoading) return <div className="p-6 text-gray-500">Loading subscription options...</div>
+  if (loading || subscriptionLoading) return <div className="p-6 text-[var(--text-secondary)]">Loading subscription options...</div>
 
   return (
-    <main className="max-w-5xl mx-auto p-6 space-y-8">
-      <section className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+    <main className="max-w-5xl mx-auto p-6 space-y-8 bg-[var(--bg)] min-h-screen">
+      <section className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl p-6 shadow-sm">
         <div>
-          <p className="text-sm font-medium text-gray-500">Subscription</p>
-          <h1 className="text-3xl font-bold">Choose your plan</h1>
-          <p className="text-gray-600 mt-2">Pay manually, then submit the transaction reference for review.</p>
+          <p className="text-sm font-medium text-[var(--text-secondary)]">Subscription</p>
+          <h1 className="text-3xl font-bold text-[var(--text-primary)]">Choose your plan</h1>
+          <p className="text-[var(--text-secondary)] mt-2">Pay manually, then submit the transaction reference for review.</p>
         </div>
-        <div className={`rounded-full px-3 py-1 text-sm font-medium capitalize ${statusStyle(hasActiveSubscription ? 'active' : 'free')}`}>
+        <div className={`rounded-full px-4 py-1.5 text-sm font-medium capitalize ${statusStyle(hasActiveSubscription ? 'active' : 'free')}`}>
             {hasActiveSubscription ? 'active' : 'free'}
           </div>
       </section>
 
-      {error && <p className="rounded border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</p>}
-      {message && <p className="rounded border border-green-200 bg-green-50 p-3 text-sm text-green-700">{message}</p>}
+      {error && <p className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</p>}
+      {message && <p className="rounded-xl border border-green-200 bg-green-50 p-3 text-sm text-green-700">{message}</p>}
 
       {hasActiveSubscription && (
-        <section className="rounded-lg border border-green-200 bg-green-50 p-4 text-green-800">
+        <section className="rounded-xl border border-green-200 bg-green-50 p-5 text-green-800">
           <p className="font-semibold">Your subscription is active.</p>
-          <p className="text-sm mt-1">Access remains available until {formatDate(subscription.endsAt)}.</p>
+          <p className="text-sm mt-1 text-green-700">Access remains available until {formatDate(subscription.endsAt)}.</p>
         </section>
       )}
 
       {!hasActiveSubscription && freeTier && (
-        <section className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-blue-900">
-          <p className="font-semibold">You are currently using the Free plan.</p>
-          <p className="text-sm mt-1">You can keep using the app within the limits shown below, or upgrade for unrestricted access.</p>
+        <section className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-5 shadow-sm">
+          <p className="font-semibold text-[var(--text-primary)]">You are currently using the Free plan.</p>
+          <p className="text-sm mt-1 text-[var(--text-secondary)]">You can keep using the app within the limits shown below, or upgrade for unrestricted access.</p>
         </section>
       )}
 
       <section className="grid gap-4 md:grid-cols-3">
         {freeTier && (
-          <div className="rounded-xl border border-blue-200 bg-blue-50 p-5">
-            <p className="text-lg font-bold">{freeTier.name}</p>
-            <p className="mt-2 text-3xl font-bold">₹0</p>
-            <ul className="mt-3 space-y-1 text-sm text-gray-700">
-              <li>{freeTier.limits.workspaces} workspace</li>
-              <li>{freeTier.limits.pagesPerWorkspace} pages per workspace</li>
-              <li>{freeTier.limits.blocksPerPage} blocks per page</li>
-              <li>All current block types</li>
+          <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-6 shadow-sm">
+            <p className="text-lg font-bold text-[var(--text-primary)]">{freeTier.name}</p>
+            <p className="mt-2 text-3xl font-bold text-[var(--accent)]">₹0</p>
+            <ul className="mt-3 space-y-1.5 text-sm text-[var(--text-secondary)]">
+              <li className="flex items-center gap-2"><span className="text-[var(--accent)]">•</span> {freeTier.limits.workspaces} workspace</li>
+              <li className="flex items-center gap-2"><span className="text-[var(--accent)]">•</span> {freeTier.limits.pagesPerWorkspace} pages per workspace</li>
+              <li className="flex items-center gap-2"><span className="text-[var(--accent)]">•</span> {freeTier.limits.blocksPerPage} blocks per page</li>
+              <li className="flex items-center gap-2"><span className="text-[var(--accent)]">•</span> All current block types</li>
             </ul>
           </div>
         )}
@@ -155,52 +155,52 @@ function SubscribePage() {
             type="button"
             key={planName}
             onClick={() => setSelectedPlan(planName)}
-            className={`rounded-xl border p-5 text-left transition ${
-              selectedPlan === planName ? 'border-black ring-2 ring-black' : 'border-gray-200 hover:border-gray-400'
+            className={`rounded-xl border p-6 text-left transition bg-[var(--bg-card)] ${
+              selectedPlan === planName ? 'border-[var(--accent)] ring-2 ring-[var(--accent-ring)] shadow-[var(--shadow-card)]' : 'border-[var(--border)] hover:border-[var(--text-secondary)] shadow-sm'
             }`}
           >
-            <p className="text-lg font-bold capitalize">{planName}</p>
-            <p className="mt-2 text-3xl font-bold">₹{plan.amount}</p>
-            <p className="mt-1 text-sm text-gray-600">{plan.durationDays} days of access</p>
+            <p className="text-lg font-bold text-[var(--text-primary)] capitalize">{planName}</p>
+            <p className="mt-2 text-3xl font-bold text-[var(--text-primary)]">₹{plan.amount}</p>
+            <p className="mt-1 text-sm text-[var(--text-secondary)]">{plan.durationDays} days of access</p>
           </button>
         ))}
       </section>
 
       <section className="grid gap-6 lg:grid-cols-2">
-        <div className="rounded-xl border bg-gray-50 p-5">
-          <h2 className="text-lg font-bold">1. Make your payment</h2>
-          <p className="mt-2 text-sm text-gray-600">Send ₹{currentPlan?.amount ?? '—'} to {paymentAccountName}.</p>
+        <div className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-6 shadow-sm">
+          <h2 className="text-lg font-bold text-[var(--text-primary)]">1. Make your payment</h2>
+          <p className="mt-2 text-sm text-[var(--text-secondary)]">Send ₹{currentPlan?.amount ?? '—'} to {paymentAccountName}.</p>
           {paymentUpiId ? (
-            <p className="mt-3 rounded bg-white border p-3 font-mono text-sm">UPI ID: {paymentUpiId}</p>
+            <p className="mt-4 rounded-xl bg-[var(--bg)] border border-[var(--border)] p-3 font-mono text-sm text-[var(--text-primary)]">UPI ID: {paymentUpiId}</p>
           ) : (
-            <p className="mt-3 rounded border border-yellow-200 bg-yellow-50 p-3 text-sm text-yellow-800">
+            <p className="mt-4 rounded-xl border border-yellow-200 bg-yellow-50 p-3 text-sm text-yellow-800">
               Payment details have not been configured yet. Contact the administrator before submitting a request.
             </p>
           )}
         </div>
 
-        <form onSubmit={handleSubmit} className="rounded-xl border p-5">
-          <h2 className="text-lg font-bold">2. Submit payment for review</h2>
-          <p className="mt-2 text-sm text-gray-600">The admin will verify the payment before activating access.</p>
+        <form onSubmit={handleSubmit} className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-6 shadow-sm">
+          <h2 className="text-lg font-bold text-[var(--text-primary)]">2. Submit payment for review</h2>
+          <p className="mt-2 text-sm text-[var(--text-secondary)]">The admin will verify the payment before activating access.</p>
 
-          <label className="block mt-4 text-sm font-medium">Transaction/reference ID</label>
+          <label className="block mt-4 text-sm font-medium text-[var(--text-primary)]">Transaction/reference ID</label>
           <input
             value={transactionId}
             onChange={(event) => setTransactionId(event.target.value)}
             required
             disabled={hasPendingRequest || submitting}
             placeholder="Example: UPI transaction ID"
-            className="mt-1 w-full rounded border p-2 disabled:bg-gray-100"
+            className="mt-1 w-full rounded-xl border border-[var(--border)] p-2.5 text-[var(--text-primary)] placeholder-[var(--text-secondary)] outline-none focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--accent-light)] transition disabled:bg-[var(--bg)]"
           />
 
-          <label className="block mt-4 text-sm font-medium">Payment proof URL <span className="text-gray-400">(optional)</span></label>
+          <label className="block mt-4 text-sm font-medium text-[var(--text-primary)]">Payment proof URL <span className="text-[var(--text-secondary)] font-normal">(optional)</span></label>
           <input
             type="url"
             value={proofUrl}
             onChange={(event) => setProofUrl(event.target.value)}
             disabled={hasPendingRequest || submitting}
             placeholder="https://..."
-            className="mt-1 w-full rounded border p-2 disabled:bg-gray-100"
+            className="mt-1 w-full rounded-xl border border-[var(--border)] p-2.5 text-[var(--text-primary)] placeholder-[var(--text-secondary)] outline-none focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--accent-light)] transition disabled:bg-[var(--bg)]"
           />
 
           {hasPendingRequest && <p className="mt-3 text-sm text-yellow-700">You already have a request waiting for review.</p>}
@@ -208,29 +208,29 @@ function SubscribePage() {
           <button
             type="submit"
             disabled={!currentPlan || hasPendingRequest || submitting}
-            className="mt-5 w-full rounded bg-black py-2 text-white disabled:cursor-not-allowed disabled:opacity-50"
+            className="mt-5 w-full rounded-xl bg-[var(--accent)] py-2.5 text-[var(--text-on-accent)] font-semibold transition hover:bg-[var(--accent-hover)] focus:outline-none focus:ring-4 focus:ring-[var(--accent-ring)] disabled:cursor-not-allowed disabled:opacity-50"
           >
             {submitting ? 'Submitting...' : subscription?.status === 'active' ? 'Submit renewal request' : 'Submit payment request'}
           </button>
         </form>
       </section>
 
-      <section className="rounded-xl border overflow-hidden">
-        <div className="border-b p-5">
-          <h2 className="text-lg font-bold">Payment history</h2>
+      <section className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] shadow-sm overflow-hidden">
+        <div className="border-b border-[var(--border)] p-5">
+          <h2 className="text-lg font-bold text-[var(--text-primary)]">Payment history</h2>
         </div>
         {paymentRequests.length === 0 ? (
-          <p className="p-5 text-sm text-gray-500">No payment requests submitted yet.</p>
+          <p className="p-5 text-sm text-[var(--text-secondary)]">No payment requests submitted yet.</p>
         ) : (
-          <div className="divide-y">
+          <div className="divide-y divide-[var(--border)]">
             {paymentRequests.map((request) => (
               <div key={request._id} className="flex flex-col gap-2 p-5 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <p className="font-medium capitalize">{request.plan} — ₹{request.amount}</p>
-                  <p className="text-sm text-gray-500">Reference: {request.transactionId} · Submitted {formatDate(request.createdAt)}</p>
+                  <p className="font-medium text-[var(--text-primary)] capitalize">{request.plan} — ₹{request.amount}</p>
+                  <p className="text-sm text-[var(--text-secondary)]">Reference: {request.transactionId} · Submitted {formatDate(request.createdAt)}</p>
                   {request.rejectionReason && <p className="mt-1 text-sm text-red-600">Reason: {request.rejectionReason}</p>}
                 </div>
-                <span className={`w-fit rounded-full px-3 py-1 text-sm font-medium capitalize ${statusStyle(request.status)}`}>
+                <span className={`w-fit rounded-full px-4 py-1.5 text-sm font-medium capitalize ${statusStyle(request.status)}`}>
                   {request.status}
                 </span>
               </div>

@@ -7,15 +7,15 @@ const OPTIONS = [
 
 function SlashMenu({ onSelect }) {
   return (
-    <div className="absolute z-10 mt-1 w-48 bg-white border rounded shadow-lg overflow-hidden">
+    <div className="absolute z-10 mt-1 w-48 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl shadow-[var(--shadow-elevated)] overflow-hidden">
       {OPTIONS.map((opt) => (
         <button
           key={opt.type}
           onClick={() => onSelect(opt.type)}
-          className="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 flex flex-col"
+          className="w-full text-left px-3 py-2.5 text-sm hover:bg-[var(--bg)] flex flex-col transition"
         >
-          <span className="font-medium">{opt.label}</span>
-          <span className="text-xs text-gray-400">{opt.hint}</span>
+          <span className="font-medium text-[var(--text-primary)]">{opt.label}</span>
+          <span className="text-xs text-[var(--text-secondary)]">{opt.hint}</span>
         </button>
       ))}
     </div>

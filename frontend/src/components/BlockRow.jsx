@@ -55,14 +55,14 @@ function BlockRow({
       }}
       onDragOver={(e) => e.preventDefault()}
       onDrop={(e) => onDrop(block._id, e.dataTransfer.getData('text/plain'))}
-      className="relative flex items-start gap-2 group cursor-move"
+      className="relative flex items-start gap-2 group cursor-move rounded-xl px-2 py-1 hover:bg-[var(--bg)] transition"
     >
-      <span className="text-gray-300 group-hover:text-gray-500 cursor-grab select-none">⠿</span>
+      <span className="text-[var(--text-muted)] group-hover:text-[var(--text-secondary)] cursor-grab select-none transition">⠿</span>
 
       <select
         value={block.type}
         onChange={(e) => onTypeChange(block, e.target.value)}
-        className="text-xs border rounded px-1 py-1 text-gray-500"
+        className="text-xs border border-[var(--border)] rounded-lg px-1.5 py-1 text-[var(--text-secondary)] bg-[var(--bg-card)] outline-none focus:border-[var(--accent)] transition"
       >
         {['text', 'heading', 'todo', 'image'].map((t) => (
           <option key={t} value={t}>{t}</option>
@@ -71,16 +71,16 @@ function BlockRow({
 
       <div className="flex-1 relative">
         {block.type === 'heading' ? (
-          <input {...sharedProps} className="w-full text-xl font-semibold outline-none border-b" placeholder="Heading..." />
+          <input {...sharedProps} className="w-full text-xl font-semibold outline-none border-b border-[var(--border)] focus:border-[var(--accent)] text-[var(--text-primary)] placeholder-[var(--text-secondary)] transition" placeholder="Heading..." />
         ) : block.type === 'todo' ? (
           <div className="flex items-center gap-2">
-            <input type="checkbox" />
-            <input {...sharedProps} className="flex-1 outline-none" placeholder="To-do..." />
+            <input type="checkbox" className="accent-[var(--accent)]" />
+            <input {...sharedProps} className="flex-1 outline-none text-[var(--text-primary)] placeholder-[var(--text-secondary)]" placeholder="To-do..." />
           </div>
         ) : block.type === 'image' ? (
-          <input {...sharedProps} className="w-full outline-none border-b" placeholder="Image URL..." />
+          <input {...sharedProps} className="w-full outline-none border-b border-[var(--border)] focus:border-[var(--accent)] text-[var(--text-primary)] placeholder-[var(--text-secondary)] transition" placeholder="Image URL..." />
         ) : (
-          <textarea {...sharedProps} className="w-full outline-none resize-none" placeholder="Type '/' for commands..." rows={1} />
+          <textarea {...sharedProps} className="w-full outline-none resize-none text-[var(--text-primary)] placeholder-[var(--text-secondary)]" placeholder="Type '/' for commands..." rows={1} />
         )}
 
         {slashMenuOpen && <SlashMenu onSelect={onSlashSelect} onClose={onSlashClose} />}
@@ -88,7 +88,7 @@ function BlockRow({
 
       <button
         onClick={() => onDelete(block._id)}
-        className="opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-600 text-xs"
+        className="opacity-0 group-hover:opacity-100 text-[var(--text-secondary)] hover:text-[var(--accent)] text-xs transition"
       >
         ✕
       </button>
