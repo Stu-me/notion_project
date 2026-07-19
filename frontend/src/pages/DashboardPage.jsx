@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { workspaceService } from '../services/workspaceService'
 import { pageService } from '../services/pageService'
+import ConfirmModal from '../components/ConfirmModal'
 
 function DashboardPage() {
   const [workspaces, setWorkspaces] = useState([])
@@ -10,6 +11,7 @@ function DashboardPage() {
 
   const [newWorkspaceName, setNewWorkspaceName] = useState('')
   const [newPageTitle, setNewPageTitle] = useState('')
+  const [deleteConfirm, setDeleteConfirm] = useState(null)
 
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -65,8 +67,6 @@ function DashboardPage() {
   }
 
   const handleDeleteWorkspace = async (id) => {
-    if (!confirm('Delete this workspace? This cannot be undone.')) return
-
     try {
       await workspaceService.delete(id)   // was: api.delete(...)
       const updated = workspaces.filter((w) => w._id !== id)
@@ -98,14 +98,26 @@ function DashboardPage() {
   }
 
   const handleDeletePage = async (id) => {
-    if (!confirm('Delete this page?')) return
-
     try {
       await pageService.delete(id)
       setPages(pages.filter((p) => p._id !== id))
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to delete page')
     }
+  }
+
+  const handleConfirmDelete = async () => {
+    if (!deleteConfirm) return
+
+    const { type, id } = deleteConfirm
+    setDeleteConfirm(null)
+
+    if (type === 'workspace') {
+      await handleDeleteWorkspace(id)
+      return
+    }
+
+    await handleDeletePage(id)
   }
 
   if (loading) return <h1 className="p-6 text-[var(--text-secondary)]">Loading...</h1>
@@ -144,7 +156,14 @@ function DashboardPage() {
                   {ws.name}
                 </span>
                 <button
-                  onClick={() => handleDeleteWorkspace(ws._id)}
+                  onClick={() => setDeleteConfirm({
+                    type: 'workspace',
+                    id: ws._id,
+                    title: 'Delete workspace?',
+                    message: 'Delete this workspace? This cannot be undone.',
+                    confirmText: 'Delete workspace',
+                    variant: 'danger',
+                  })}
                   className="text-[var(--text-secondary)] hover:text-[var(--accent)] text-xs ml-2 transition"
                 >
                   ✕
@@ -193,7 +212,14 @@ function DashboardPage() {
                       <p className="font-medium text-[var(--text-primary)]">{page.title}</p>
                     </div>
                     <button
-                      onClick={() => handleDeletePage(page._id)}
+                      onClick={() => setDeleteConfirm({
+                        type: 'page',
+                        id: page._id,
+                        title: 'Delete page?',
+                        message: 'Delete this page? This cannot be undone.',
+                        confirmText: 'Delete page',
+                        variant: 'danger',
+                      })}
                       className="absolute top-3 right-3 text-[var(--text-secondary)] hover:text-[var(--accent)] text-xs opacity-0 group-hover:opacity-100 transition"
                     >
                       ✕
@@ -209,6 +235,16 @@ function DashboardPage() {
           )}
         </div>
       </div>
+
+      <ConfirmModal
+        isOpen={Boolean(deleteConfirm)}
+        title={deleteConfirm?.title || 'Confirm action'}
+        message={deleteConfirm?.message || ''}
+        confirmText={deleteConfirm?.confirmText || 'Confirm'}
+        variant={deleteConfirm?.variant || 'danger'}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setDeleteConfirm(null)}
+      />
     </div>
   )
 }

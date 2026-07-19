@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { authService } from '../services/authService'
 import Toast from '../components/Toast'
+import pandaLogo from '../assets/KungFuPanda.jpg'
 
 // Decides where each authenticated role should land after login or a page refresh.
 function getDestination(user) {
@@ -85,8 +86,10 @@ function LoginPage() {
         <section className="grid w-full overflow-hidden rounded-3xl border border-[var(--border)] bg-[var(--bg-card)] shadow-[var(--shadow-elevated)] lg:grid-cols-[1.05fr_0.95fr]">
           <div className="hidden bg-[var(--btn-primary-bg)] p-10 text-[var(--text-on-accent)] lg:flex lg:flex-col lg:justify-between">
             <div>
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[var(--accent)] text-xl text-[var(--text-on-accent)]">🐼</div>
-              <p className="mt-8 text-sm font-semibold uppercase tracking-[0.22em] text-[var(--accent)] opacity-90">Pandawrite</p>
+               <img src={pandaLogo} alt="Pandawrite logo" className="h-10 w-10 rounded-full border border-(--border) bg-white object-cover shadow-sm" />
+                      <span className="text-(--logo-color) hover:text-(--logo-color-hover)">
+                        Pandawrite
+                      </span>
               <h1 className="mt-4 text-4xl font-bold leading-tight">Write your story.<br />Find your balance.</h1>
               <p className="mt-5 max-w-sm text-[var(--text-secondary)]">A mindful workspace for pages, notes, and the ideas that matter.</p>
             </div>

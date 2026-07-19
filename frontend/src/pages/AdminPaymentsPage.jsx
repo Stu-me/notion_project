@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { adminService } from '../services/adminService'
+import ConfirmModal from '../components/ConfirmModal'
 
 // Formats dates from the API in the administrator's local timezone.
 function formatDate(value) {
@@ -29,6 +30,7 @@ function AdminPaymentsPage() {
   const [rejectionReason, setRejectionReason] = useState('')
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
+  const [confirmAction, setConfirmAction] = useState(null)
 
   // Loads pending reviews and the current subscription list for the admin dashboard.
   const loadAdminData = useCallback(async () => {
@@ -56,8 +58,6 @@ function AdminPaymentsPage() {
 
   // Approves a payment only after the admin has checked the actual bank/UPI transaction.
   const handleApprove = async (paymentId) => {
-    if (!window.confirm('Confirm that you verified this payment in your bank or UPI account.')) return
-
     setActionLoadingId(paymentId)
     setError('')
     try {
@@ -90,8 +90,6 @@ function AdminPaymentsPage() {
 
   // Removes premium access without deleting the user, pages, or payment history.
   const handleSuspend = async (userId) => {
-    if (!window.confirm('Suspend this subscription? The user will return to free-plan limits.')) return
-
     setActionLoadingId(userId)
     setError('')
     try {
@@ -102,6 +100,22 @@ function AdminPaymentsPage() {
       setError(err.response?.data?.message || 'Unable to suspend subscription')
     } finally {
       setActionLoadingId('')
+    }
+  }
+
+  const handleConfirmAction = async () => {
+    if (!confirmAction) return
+
+    const { type, id } = confirmAction
+    setConfirmAction(null)
+
+    if (type === 'approve') {
+      await handleApprove(id)
+      return
+    }
+
+    if (type === 'suspend') {
+      await handleSuspend(id)
     }
   }
 
@@ -163,7 +177,14 @@ function AdminPaymentsPage() {
                 ) : (
                   <div className="flex gap-2">
                     <button
-                      onClick={() => handleApprove(request._id)}
+                      onClick={() => setConfirmAction({
+                        type: 'approve',
+                        id: request._id,
+                        title: 'Approve payment?',
+                        message: 'Confirm that you verified this payment in your bank or UPI account.',
+                        confirmText: 'Approve',
+                        variant: 'warning',
+                      })}
                       disabled={actionLoadingId === request._id}
                       className="rounded-xl bg-[var(--btn-primary-bg)] px-5 py-2 text-sm text-[var(--text-on-accent)] font-semibold disabled:opacity-50 hover:bg-[var(--btn-primary-hover)] transition"
                     >
@@ -198,7 +219,14 @@ function AdminPaymentsPage() {
                   <span className={`rounded-full px-3 py-1 text-sm font-medium capitalize ${statusStyle(subscription.status)}`}>{subscription.status}</span>
                   {subscription.status === 'active' && (
                     <button
-                      onClick={() => handleSuspend(subscription.user._id)}
+                      onClick={() => setConfirmAction({
+                        type: 'suspend',
+                        id: subscription.user._id,
+                        title: 'Suspend subscription?',
+                        message: 'Suspend this subscription? The user will return to free-plan limits.',
+                        confirmText: 'Suspend',
+                        variant: 'danger',
+                      })}
                       disabled={actionLoadingId === subscription.user._id}
                       className="rounded-xl border border-red-300 px-3 py-1.5 text-sm text-red-700 hover:bg-red-50 disabled:opacity-50 transition"
                     >
@@ -211,6 +239,16 @@ function AdminPaymentsPage() {
           </div>
         )}
       </section>
+
+      <ConfirmModal
+        isOpen={Boolean(confirmAction)}
+        title={confirmAction?.title || 'Confirm action'}
+        message={confirmAction?.message || ''}
+        confirmText={confirmAction?.confirmText || 'Confirm'}
+        variant={confirmAction?.variant || 'danger'}
+        onConfirm={handleConfirmAction}
+        onCancel={() => setConfirmAction(null)}
+      />
     </main>
   )
 }

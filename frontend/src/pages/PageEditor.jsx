@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { pageService } from '../services/pageService'
 import { blockService } from '../services/blockService'
 import BlockRow from '../components/BlockRow'
+import ConfirmModal from '../components/ConfirmModal'
 import { useBlocksReducer } from '../hooks/useBlocksReducer'
 import { useDebouncedSave } from '../hooks/useDebouncedSave'
 
@@ -19,6 +20,7 @@ function PageEditor() {
   const [pageLoading, setPageLoading] = useState(true)
   const [error, setError] = useState('')
   const [slashMenuFor, setSlashMenuFor] = useState(null)
+  const [deleteBlockConfirm, setDeleteBlockConfirm] = useState(null)
 
   const fetchPage = useCallback(async () => {
     try {
@@ -113,6 +115,14 @@ function PageEditor() {
       setError(err.response?.data?.message || 'Failed to delete block')
       return false
     }
+  }
+
+  const handleConfirmDeleteBlock = async () => {
+    if (!deleteBlockConfirm) return
+
+    const blockId = deleteBlockConfirm
+    setDeleteBlockConfirm(null)
+    await handleDeleteBlock(blockId)
   }
 
   const handleDeleteAndFocusPrevious = async (blockId) => {
@@ -215,7 +225,7 @@ function PageEditor() {
               }}
               onContentChange={handleContentChange}
               onTypeChange={handleTypeChange}
-              onDelete={handleDeleteBlock}
+              onDelete={(blockId) => setDeleteBlockConfirm(blockId)}
               onDragStart={handleDragStart}
               onDrop={handleDrop}
               onAddAfter={handleAddBlockAfter}
@@ -240,6 +250,16 @@ function PageEditor() {
           </button>
         ))}
       </div>
+
+      <ConfirmModal
+        isOpen={Boolean(deleteBlockConfirm)}
+        title="Delete block?"
+        message="Delete this block? This cannot be undone."
+        confirmText="Delete block"
+        variant="danger"
+        onConfirm={handleConfirmDeleteBlock}
+        onCancel={() => setDeleteBlockConfirm(null)}
+      />
     </div>
   )
 }

@@ -24,9 +24,13 @@
   --text-muted: #9CA3AF;
   --text-on-accent: #FFFFFF;
 
+  /* Logo */
+  --logo-color: #15803D;
+  --logo-color-hover: #166534;
+
   /* Gold — primary accent (Dragon Warrior) */
-  --accent: #C29336;
-  --accent-hover: #D4A84B;
+  --accent: #7c6219;
+  --accent-hover: #c3b393;
   --accent-light: rgba(194, 147, 54, 0.12);
   --accent-ring: rgba(194, 147, 54, 0.30);
 
@@ -39,7 +43,7 @@
   --border-light: #E8E4DC;
 
   /* Buttons */
-  --btn-primary-bg: #C29336;
+  --btn-primary-bg: #f1a76ee7;
   --btn-primary-text: #FFFFFF;
   --btn-primary-hover: #D4A84B;
   --btn-secondary-bg: #F2F3F4;
@@ -73,6 +77,10 @@
   --text-secondary: #9CA3AF;
   --text-muted: #6B7280;
   --text-on-accent: #141414;
+
+  /* Logo */
+  --logo-color: #46bc71;
+  --logo-color-hover: #86EFAC;
 
   --accent: #F0C001;
   --accent-hover: #FFD633;
