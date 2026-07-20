@@ -3,22 +3,42 @@ const User = require('../models/userModel');
 const Subscription = require('../models/subscriptionModel');
 const PaymentRequest = require('../models/paymentRequestModel');
 const SupportQuery = require('../models/supportQueryModel');
+const { getPlan } = require('../config/subscriptionPlans');
 
 const ONLINE_WINDOW_MS = 1 * 60 * 1000;
 
-// Returns the aggregate figures shown in the four summary cards without loading every user into memory.
+const addDays = (date, days) => {
+  const result = new Date(date);
+  result.setDate(result.getDate() + days);
+  return result;
+};
+
+// Returns the aggregate figures shown in the summary cards without loading every user into memory.
 const getAdminOverview = asyncHandler(async (req, res) => {
   const now = new Date();
   const onlineSince = new Date(Date.now() - ONLINE_WINDOW_MS);
-  const [totalUsers, activeUsers, subscribedUsers, pendingPayments, openQueries] = await Promise.all([
+  const [totalUsers, activeUsers, subscribedUsers, pendingPayments, openQueries, totalEarningsResult] = await Promise.all([
     User.countDocuments({ role: 'user' }),
     User.countDocuments({ role: 'user', lastSeenAt: { $gte: onlineSince } }),
     Subscription.countDocuments({ status: 'active', endsAt: { $gt: now } }),
     PaymentRequest.countDocuments({ status: 'pending' }),
     SupportQuery.countDocuments({ status: 'open' }),
+    PaymentRequest.aggregate([
+      { $match: { status: 'approved' } },
+      { $group: { _id: null, total: { $sum: '$amount' } } }
+    ]),
   ]);
 
-  return res.status(200).json({ totalUsers, activeUsers, subscribedUsers, pendingApprovals: pendingPayments, openQueries });
+  const totalEarnings = totalEarningsResult[0]?.total || 0;
+
+  return res.status(200).json({ 
+    totalUsers, 
+    activeUsers, 
+    subscribedUsers, 
+    pendingApprovals: pendingPayments, 
+    openQueries, 
+    totalEarnings 
+  });
 });
 
 // Returns one paginated admin-friendly row per user, including their current subscription and latest payment request.
@@ -84,4 +104,155 @@ const resolveSupportQuery = asyncHandler(async (req, res) => {
   return res.status(200).json(query);
 });
 
-module.exports = { getAdminOverview, getAdminUsers, getAdminNotifications, resolveSupportQuery };
+// Updates user subscription status to pending, approved, declined, or suspended.
+const updateUserSubscriptionStatus = asyncHandler(async (req, res) => {
+  const { userId } = req.params;
+  const { action } = req.body; // 'approve', 'decline', 'suspend', 'pending'
+
+  if (!['approve', 'decline', 'suspend', 'pending'].includes(action)) {
+    res.status(400);
+    throw new Error('Invalid action. Must be approve, decline, suspend, or pending.');
+  }
+
+  const user = await User.findById(userId);
+  if (!user) {
+    res.status(404);
+    throw new Error('User not found');
+  }
+
+  let latestPayment = await PaymentRequest.findOne({ user: userId }).sort({ createdAt: -1 });
+
+  if (action === 'approve') {
+    if (!latestPayment) {
+      latestPayment = await PaymentRequest.create({
+        user: userId,
+        plan: 'monthly',
+        amount: 99,
+        transactionId: `MANUAL-APP-${userId}-${Date.now()}`,
+        status: 'pending',
+      });
+    } else if (latestPayment.status !== 'pending') {
+      latestPayment.status = 'pending';
+      await latestPayment.save();
+    }
+
+    const plan = getPlan(latestPayment.plan) || { durationDays: 30 };
+    const now = new Date();
+    const currentSubscription = await Subscription.findOne({ user: userId });
+    const startsAt = currentSubscription?.status === 'active' && currentSubscription.endsAt > now
+      ? currentSubscription.endsAt
+      : now;
+
+    const subscription = await Subscription.findOneAndUpdate(
+      { user: userId },
+      {
+        plan: latestPayment.plan,
+        status: 'active',
+        startsAt,
+        endsAt: addDays(startsAt, plan.durationDays),
+        approvedBy: req.user._id,
+        paymentRequest: latestPayment._id,
+      },
+      { new: true, upsert: true, runValidators: true },
+    );
+
+    latestPayment.status = 'approved';
+    latestPayment.reviewedBy = req.user._id;
+    latestPayment.reviewedAt = now;
+    latestPayment.rejectionReason = undefined;
+    await latestPayment.save();
+
+    return res.status(200).json({ success: true, latestPayment, subscription });
+  }
+
+  if (action === 'decline') {
+    if (!latestPayment) {
+      latestPayment = await PaymentRequest.create({
+        user: userId,
+        plan: 'monthly',
+        amount: 99,
+        transactionId: `MANUAL-DEC-${userId}-${Date.now()}`,
+        status: 'pending',
+      });
+    }
+
+    latestPayment.status = 'rejected';
+    latestPayment.reviewedBy = req.user._id;
+    latestPayment.reviewedAt = new Date();
+    latestPayment.rejectionReason = 'Manually declined by administrator';
+    await latestPayment.save();
+
+    const subscription = await Subscription.findOne({ user: userId });
+    if (subscription) {
+      subscription.status = 'expired';
+      await subscription.save();
+    }
+
+    return res.status(200).json({ success: true, latestPayment, subscription });
+  }
+
+  if (action === 'suspend') {
+    let subscription = await Subscription.findOne({ user: userId });
+    if (!subscription) {
+      if (!latestPayment) {
+        latestPayment = await PaymentRequest.create({
+          user: userId,
+          plan: 'monthly',
+          amount: 99,
+          transactionId: `MANUAL-SUS-${userId}-${Date.now()}`,
+          status: 'approved',
+          reviewedBy: req.user._id,
+          reviewedAt: new Date(),
+        });
+      }
+      subscription = await Subscription.create({
+        user: userId,
+        plan: latestPayment.plan,
+        status: 'suspended',
+        startsAt: new Date(),
+        endsAt: new Date(),
+        approvedBy: req.user._id,
+        paymentRequest: latestPayment._id,
+      });
+    } else {
+      subscription.status = 'suspended';
+      await subscription.save();
+    }
+
+    return res.status(200).json({ success: true, latestPayment, subscription });
+  }
+
+  if (action === 'pending') {
+    if (!latestPayment) {
+      latestPayment = await PaymentRequest.create({
+        user: userId,
+        plan: 'monthly',
+        amount: 99,
+        transactionId: `MANUAL-PEN-${userId}-${Date.now()}`,
+        status: 'pending',
+      });
+    } else {
+      latestPayment.status = 'pending';
+      latestPayment.reviewedBy = undefined;
+      latestPayment.reviewedAt = undefined;
+      latestPayment.rejectionReason = undefined;
+      await latestPayment.save();
+    }
+
+    const subscription = await Subscription.findOne({ user: userId });
+    if (subscription) {
+      subscription.status = 'expired';
+      await subscription.save();
+    }
+
+    return res.status(200).json({ success: true, latestPayment, subscription });
+  }
+});
+
+module.exports = { 
+  getAdminOverview, 
+  getAdminUsers, 
+  getAdminNotifications, 
+  resolveSupportQuery,
+  updateUserSubscriptionStatus 
+};

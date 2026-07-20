@@ -79,15 +79,17 @@ function AdminPaymentsPage() {
   // Executes the payment decision selected in the user table, then refreshes affected metrics and notifications.
   const handleAction = async () => {
     if (!confirmAction) return
-    const { type, id } = confirmAction
+    const { type, userId } = confirmAction
     setConfirmAction(null)
-    setActionLoadingId(id)
+    setActionLoadingId(userId)
     setError('')
     try {
-      if (type === 'approve') await adminService.approvePayment(id)
-      if (type === 'decline') await adminService.rejectPayment(id)
-      if (type === 'suspend') await adminService.suspendSubscription(id)
-      setMessage(type === 'approve' ? 'Payment approved and subscription activated.' : type === 'decline' ? 'Payment request declined.' : 'Subscription suspended.')
+      await adminService.updateUserSubscriptionStatus(userId, type)
+      let displayType = type
+      if (type === 'decline') displayType = 'declined'
+      if (type === 'approve') displayType = 'approved'
+      if (type === 'suspend') displayType = 'suspended'
+      setMessage(`Subscription status successfully updated to ${displayType}.`)
       await loadAdminData()
     } catch (err) {
       setError(err.response?.data?.message || 'Unable to complete this admin action')
@@ -131,20 +133,26 @@ function AdminPaymentsPage() {
         {error && <p className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</p>}
         {message && <p className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-700">{message}</p>}
 
-        <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
           <MetricCard label="Total users" value={overview?.totalUsers ?? 0} hint="Registered customer accounts" icon="👥" />
           <MetricCard label="Active users" value={overview?.activeUsers ?? 0} hint="Active in the last 5 minutes" icon="🟢" />
           <MetricCard label="Subscribed users" value={overview?.subscribedUsers ?? 0} hint="Currently active paid plans" icon="✨" />
           <MetricCard label="Pending approvals" value={overview?.pendingApprovals ?? 0} hint={`${overview?.openQueries ?? 0} open support queries`} icon="⏳" />
+          <MetricCard label="Total earnings" value={`₹${(overview?.totalEarnings ?? 0).toLocaleString()}`} hint="Approved manual subscriptions" icon="💰" />
         </section>
 
         <section className="overflow-hidden rounded-2xl border border-(--border) bg-(--bg-card) shadow-sm">
           <div className="flex items-center justify-between border-b border-(--border) px-5 py-4"><div><h2 className="font-bold text-(--text-primary)">User subscriptions</h2><p className="mt-1 text-sm text-(--text-secondary)">Approve or decline pending payments, and suspend active paid access.</p></div><span className="text-sm text-(--text-secondary)">{users.length} users</span></div>
-          <div className="overflow-x-auto"><table className="w-full min-w-[850px] text-left text-sm"><thead className="bg-(--bg)"><tr className="text-xs uppercase tracking-wide text-(--text-secondary)"><th className="px-5 py-3 font-semibold">User</th><th className="px-5 py-3 font-semibold">Subscription</th><th className="px-5 py-3 font-semibold">Payment status</th><th className="px-5 py-3 font-semibold">Activity</th><th className="px-5 py-3 font-semibold text-right">Actions</th></tr></thead><tbody className="divide-y divide-(--border)">{users.map((user) => {
+          <div className="overflow-x-auto"><table className="w-full min-w-[950px] text-left text-sm"><thead className="bg-(--bg)"><tr className="text-xs uppercase tracking-wide text-(--text-secondary)"><th className="px-5 py-3 font-semibold">User</th><th className="px-5 py-3 font-semibold">Subscription</th><th className="px-5 py-3 font-semibold">Payment status</th><th className="px-5 py-3 font-semibold">Activity</th><th className="px-5 py-3 font-semibold text-right">Actions</th></tr></thead><tbody className="divide-y divide-(--border)">{users.map((user) => {
             const payment = user.latestPayment
             const subscription = user.subscription
-            const isBusy = actionLoadingId === (payment?._id || user._id)
-            return <tr key={user._id} className="hover:bg-(--bg) transition"><td className="px-5 py-4"><p className="font-semibold text-(--text-primary)">{user.name}</p><p className="mt-0.5 text-xs text-(--text-secondary)">{user.email}</p></td><td className="px-5 py-4"><Badge tone={getTone(subscription?.status)}>{subscription?.plan || 'free'} {subscription?.status ? `· ${subscription.status}` : ''}</Badge></td><td className="px-5 py-4">{payment ? <Badge tone={getTone(payment.status)}>{payment.plan} · {payment.status}</Badge> : <span className="text-(--text-secondary)">No request</span>}</td><td className="px-5 py-4"><Badge tone={getTone(user.presence)}>{user.presence}</Badge><p className="mt-1 text-xs text-(--text-secondary)">Last seen {formatDate(user.lastSeenAt)}</p></td><td className="px-5 py-4 text-right"><div className="flex justify-end gap-2">{payment?.status === 'pending' && <><button onClick={() => setConfirmAction({ type: 'approve', id: payment._id, title: 'Approve payment?', message: `Confirm you verified ${user.name}'s payment before activating access.`, confirmText: 'Approve', variant: 'warning' })} disabled={isBusy} className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50">Approve</button><button onClick={() => setConfirmAction({ type: 'decline', id: payment._id, title: 'Decline payment?', message: `Decline ${user.name}'s pending payment request.`, confirmText: 'Decline', variant: 'danger' })} disabled={isBusy} className="rounded-lg border border-red-300 px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-50 disabled:opacity-50">Decline</button></>}{subscription?.status === 'active' && <button onClick={() => setConfirmAction({ type: 'suspend', id: user._id, title: 'Suspend subscription?', message: `${user.name} will return to the free-plan limits. Their data is not deleted.`, confirmText: 'Suspend', variant: 'danger' })} disabled={isBusy} className="rounded-lg border border-amber-300 px-3 py-1.5 text-xs font-semibold text-amber-700 hover:bg-amber-50 disabled:opacity-50">Suspend</button>}{payment?.status !== 'pending' && subscription?.status !== 'active' && <span className="text-xs text-(--text-secondary)">No actions available</span>}</div></td></tr>
+            const isBusy = actionLoadingId === user._id
+            
+            // Generate a stable avatar file index 01-37 from the user._id string
+            const avatarNum = (user._id.slice(-4).split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % 37) + 1;
+            const avatarPath = `/images/user/user-${String(avatarNum).padStart(2, '0')}.jpg`;
+
+            return <tr key={user._id} className="hover:bg-(--bg) transition"><td className="px-5 py-4"><div className="flex items-center gap-3"><img src={avatarPath} alt={user.name} className="h-10 w-10 rounded-full object-cover border border-(--border) bg-(--bg)" /><div className="min-w-0"><p className="font-semibold text-(--text-primary) truncate">{user.name}</p><p className="mt-0.5 text-xs text-(--text-secondary) truncate">{user.email}</p></div></div></td><td className="px-5 py-4"><Badge tone={getTone(subscription?.status)}>{subscription?.plan || 'free'} {subscription?.status ? `· ${subscription.status}` : ''}</Badge></td><td className="px-5 py-4">{payment ? <Badge tone={getTone(payment.status)}>{payment.plan} · {payment.status}</Badge> : <span className="text-(--text-secondary)">No request</span>}</td><td className="px-5 py-4"><Badge tone={getTone(user.presence)}>{user.presence}</Badge><p className="mt-1 text-xs text-(--text-secondary)">Last seen {formatDate(user.lastSeenAt)}</p></td><td className="px-5 py-4 text-right"><div className="flex justify-end gap-1.5"><button onClick={() => setConfirmAction({ type: 'pending', userId: user._id, title: 'Set status to pending?', message: `Set ${user.name}'s payment review back to pending. They will revert to free limits.`, confirmText: 'Set Pending', variant: 'warning' })} disabled={isBusy} className="ripple rounded-lg bg-amber-500 hover:bg-amber-600 px-2.5 py-1.5 text-xs font-semibold text-white disabled:opacity-40">Pending</button><button onClick={() => setConfirmAction({ type: 'approve', userId: user._id, title: 'Approve subscription?', message: `Activate/Approve subscription access for ${user.name}.`, confirmText: 'Approve', variant: 'warning' })} disabled={isBusy} className="ripple rounded-lg bg-emerald-600 hover:bg-emerald-700 px-2.5 py-1.5 text-xs font-semibold text-white disabled:opacity-40">Approve</button><button onClick={() => setConfirmAction({ type: 'decline', userId: user._id, title: 'Decline request?', message: `Decline ${user.name}'s request and expire subscription.`, confirmText: 'Decline', variant: 'danger' })} disabled={isBusy} className="ripple rounded-lg bg-orange-600 hover:bg-orange-700 px-2.5 py-1.5 text-xs font-semibold text-white disabled:opacity-40">Decline</button><button onClick={() => setConfirmAction({ type: 'suspend', userId: user._id, title: 'Suspend subscription?', message: `Suspend ${user.name}'s active paid access. Their data will be preserved.`, confirmText: 'Suspend', variant: 'danger' })} disabled={isBusy} className="ripple rounded-lg bg-red-600 hover:bg-red-700 px-2.5 py-1.5 text-xs font-semibold text-white disabled:opacity-40">Suspend</button></div></td></tr>
           })}</tbody></table></div>
           {users.length === 0 && <p className="p-6 text-center text-sm text-(--text-secondary)">No registered users yet.</p>}
         </section>

@@ -15,4 +15,5 @@ export const adminService = {
   rejectPayment: (paymentId, reason) => api.patch(`/api/admin/payments/${paymentId}/reject`, { reason }),
   getSubscriptions: () => api.get('/api/admin/subscriptions'),
   suspendSubscription: (userId) => api.patch(`/api/admin/subscriptions/${userId}/suspend`),
+  updateUserSubscriptionStatus: (userId, action) => api.patch(`/api/admin/users/${userId}/subscription-status`, { action }),
 }
