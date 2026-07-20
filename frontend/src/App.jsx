@@ -12,6 +12,7 @@ import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import SubscribePage from "./pages/SubscribePage";
 import AdminPaymentsPage from "./pages/AdminPaymentsPage";
+import AboutPage from "./pages/AboutPage";
 import PageEditor from "./pages/PageEditor";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AdminRoute from "./components/AdminRoute";
@@ -33,6 +34,7 @@ function App() {
       <BrowserRouter>
         <Routes>
           {/* we use navigat in the  / cause dashboard is protected and if we simply  <dashboard people will surpass the authentication > */}
+            <Route path="/about" element={<AboutPage />} />
             <Route path="/login" element={<LoginPage></LoginPage>} />
             <Route path="/register" element={<RegisterPage></RegisterPage>} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />

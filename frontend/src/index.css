@@ -61,6 +61,12 @@
   --toggle-bg: #E8E4DC;
   --toggle-dot: #FFFFFF;
   --selection: rgba(194, 147, 54, 0.25);
+
+  --about-ink: #101310;
+  --about-paper: #F2F3F4;
+  --about-gold: #C29336;
+  --about-gold-light: #F0C001;
+  --about-jade: #1E604C;
 }
 
 /* ─── Dark Theme — Ink Wash ─── */
@@ -123,4 +129,20 @@ body {
 
 ::selection {
   background: var(--selection);
+}
+
+.about-hero {
+  background-image: linear-gradient(90deg, rgba(10, 14, 11, 0.96) 0%, rgba(10, 14, 11, 0.8) 42%, rgba(10, 14, 11, 0.35) 100%), url("https://cdn.builder.io/api/v1/image/assets%2F481ba09978d54704bfa5b3045d7a60a9%2F4cb4e41761ff454b803849b441291259?format=webp&width=1600&height=1000");
+  background-position: center;
+  background-size: cover;
+}
+
+.about-page {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+@media (max-width: 640px) {
+  .about-hero {
+    background-position: 62% center;
+  }
 }
