@@ -27,6 +27,13 @@ const authMiddleware = asyncHandler(async (req, res, next) => {
                 return res.status(401).json({ message: 'User no longer exists' });
             }
 
+            // Update presence at most once per minute so normal API activity does not create a write on every request.
+            const oneMinuteAgo = Date.now() - 60 * 1000;
+            if (!req.user.lastSeenAt || req.user.lastSeenAt.getTime() < oneMinuteAgo) {
+                req.user.lastSeenAt = new Date();
+                await req.user.save({ validateBeforeSave: false });
+            }
+
             // STEP 5 — Pass control to the actual controller
            return next();
 

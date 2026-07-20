@@ -1,4 +1,5 @@
-import { createContext, useContext, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
+import ThemeContext from './themeContext'
 
 /**
  * ThemeContext
@@ -8,8 +9,6 @@ import { createContext, useContext, useEffect, useState } from 'react'
  * - Sets the `data-theme` attribute on <html> for CSS variable switching.
  * - Provides `theme` and a `toggleTheme` callback to all children.
  */
-const ThemeContext = createContext(null)
-
 export function ThemeProvider({ children }) {
   // Initialise from localStorage, defaulting to 'light' (Claude theme).
   const [theme, setTheme] = useState(() => {
@@ -37,14 +36,4 @@ export function ThemeProvider({ children }) {
       {children}
     </ThemeContext.Provider>
   )
-}
-
-/**
- * Hook to access theme state and toggle function.
- * Usage:  const { theme, toggleTheme } = useTheme()
- */
-export function useTheme() {
-  const ctx = useContext(ThemeContext)
-  if (!ctx) throw new Error('useTheme must be used within a ThemeProvider')
-  return ctx
 }

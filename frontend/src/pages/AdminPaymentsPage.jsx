@@ -2,253 +2,154 @@ import { useCallback, useEffect, useState } from 'react'
 import { adminService } from '../services/adminService'
 import ConfirmModal from '../components/ConfirmModal'
 
-// Formats dates from the API in the administrator's local timezone.
+// Turns backend dates into the administrator's local readable date and time.
 function formatDate(value) {
   if (!value) return '—'
   return new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value))
 }
 
-// Applies a readable colour to each subscription or payment state.
-function statusStyle(status) {
+// Keeps the badge presentation consistent for plans, requests, and presence states.
+function Badge({ children, tone = 'gray' }) {
   const styles = {
-    active: 'bg-green-100 text-green-700',
-    pending: 'bg-yellow-100 text-yellow-700',
-    approved: 'bg-green-100 text-green-700',
-    rejected: 'bg-red-100 text-red-700',
-    suspended: 'bg-red-100 text-red-700',
-    expired: 'bg-gray-200 text-gray-700',
+    green: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300',
+    yellow: 'bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300',
+    red: 'bg-red-50 text-red-700 dark:bg-red-950/50 dark:text-red-300',
+    blue: 'bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300',
+    gray: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300',
   }
-  return styles[status] || 'bg-gray-100 text-gray-700'
+  return <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold capitalize ${styles[tone]}`}>{children}</span>
 }
 
+// Maps business states to a clear, accessible badge colour.
+function getTone(status) {
+  if (['active', 'approved', 'online'].includes(status)) return 'green'
+  if (status === 'pending') return 'yellow'
+  if (['suspended', 'rejected'].includes(status)) return 'red'
+  return 'gray'
+}
+
+// Renders one reusable high-level metric card for the admin overview.
+function MetricCard({ label, value, hint, icon }) {
+  return (
+    <article className="rounded-2xl border border-(--border) bg-(--bg-card) p-5 shadow-sm">
+      <div className="flex items-start justify-between">
+        <div><p className="text-sm font-medium text-(--text-secondary)">{label}</p><p className="mt-3 text-3xl font-bold text-(--text-primary)">{value}</p></div>
+        <span className="grid h-11 w-11 place-items-center rounded-xl bg-blue-50 text-xl dark:bg-blue-950/50">{icon}</span>
+      </div>
+      <p className="mt-3 text-xs text-(--text-secondary)">{hint}</p>
+    </article>
+  )
+}
+
+// Combines the admin metrics, notification queue, and subscription-management table.
 function AdminPaymentsPage() {
-  const [paymentRequests, setPaymentRequests] = useState([])
-  const [subscriptions, setSubscriptions] = useState([])
+  const [overview, setOverview] = useState(null)
+  const [users, setUsers] = useState([])
+  const [notifications, setNotifications] = useState([])
   const [loading, setLoading] = useState(true)
   const [actionLoadingId, setActionLoadingId] = useState('')
-  const [rejectingId, setRejectingId] = useState('')
-  const [rejectionReason, setRejectionReason] = useState('')
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
+  const [notificationsOpen, setNotificationsOpen] = useState(false)
   const [confirmAction, setConfirmAction] = useState(null)
 
-  // Loads pending reviews and the current subscription list for the admin dashboard.
+  // Loads the independent dashboard sections together so the screen has one consistent refresh point.
   const loadAdminData = useCallback(async () => {
-    setLoading(true)
     setError('')
     try {
-      const [paymentsRes, subscriptionsRes] = await Promise.all([
-        adminService.getPaymentRequests('pending'),
-        adminService.getSubscriptions(),
+      const [overviewRes, usersRes, notificationsRes] = await Promise.all([
+        adminService.getOverview(), adminService.getUsers({ limit: 50 }), adminService.getNotifications(),
       ])
-      setPaymentRequests(paymentsRes.data)
-      setSubscriptions(subscriptionsRes.data)
+      setOverview(overviewRes.data)
+      setUsers(usersRes.data.users)
+      setNotifications(notificationsRes.data)
     } catch (err) {
-      setError(err.response?.data?.message || 'Unable to load admin data')
+      setError(err.response?.data?.message || 'Unable to load the admin dashboard')
     } finally {
       setLoading(false)
     }
   }, [])
 
   useEffect(() => {
-    // This starts asynchronous admin API calls after the page renders.
+    // The request resolves asynchronously; the linter guard documents this intentional initial data load.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void loadAdminData()
   }, [loadAdminData])
 
-  // Approves a payment only after the admin has checked the actual bank/UPI transaction.
-  const handleApprove = async (paymentId) => {
-    setActionLoadingId(paymentId)
-    setError('')
-    try {
-      await adminService.approvePayment(paymentId)
-      setMessage('Payment approved and subscription activated.')
-      await loadAdminData()
-    } catch (err) {
-      setError(err.response?.data?.message || 'Unable to approve payment')
-    } finally {
-      setActionLoadingId('')
-    }
-  }
-
-  // Rejects a pending request while preserving the decision and optional reason in the audit history.
-  const handleReject = async (paymentId) => {
-    setActionLoadingId(paymentId)
-    setError('')
-    try {
-      await adminService.rejectPayment(paymentId, rejectionReason)
-      setRejectingId('')
-      setRejectionReason('')
-      setMessage('Payment request rejected.')
-      await loadAdminData()
-    } catch (err) {
-      setError(err.response?.data?.message || 'Unable to reject payment')
-    } finally {
-      setActionLoadingId('')
-    }
-  }
-
-  // Removes premium access without deleting the user, pages, or payment history.
-  const handleSuspend = async (userId) => {
-    setActionLoadingId(userId)
-    setError('')
-    try {
-      await adminService.suspendSubscription(userId)
-      setMessage('Subscription suspended.')
-      await loadAdminData()
-    } catch (err) {
-      setError(err.response?.data?.message || 'Unable to suspend subscription')
-    } finally {
-      setActionLoadingId('')
-    }
-  }
-
-  const handleConfirmAction = async () => {
+  // Executes the payment decision selected in the user table, then refreshes affected metrics and notifications.
+  const handleAction = async () => {
     if (!confirmAction) return
-
     const { type, id } = confirmAction
     setConfirmAction(null)
-
-    if (type === 'approve') {
-      await handleApprove(id)
-      return
-    }
-
-    if (type === 'suspend') {
-      await handleSuspend(id)
+    setActionLoadingId(id)
+    setError('')
+    try {
+      if (type === 'approve') await adminService.approvePayment(id)
+      if (type === 'decline') await adminService.rejectPayment(id)
+      if (type === 'suspend') await adminService.suspendSubscription(id)
+      setMessage(type === 'approve' ? 'Payment approved and subscription activated.' : type === 'decline' ? 'Payment request declined.' : 'Subscription suspended.')
+      await loadAdminData()
+    } catch (err) {
+      setError(err.response?.data?.message || 'Unable to complete this admin action')
+    } finally {
+      setActionLoadingId('')
     }
   }
 
-  if (loading) return <div className="p-6 text-[var(--text-secondary)]">Loading admin dashboard...</div>
+  // Resolves only support-query notifications; payment notifications disappear when approved or declined.
+  const handleResolveQuery = async (queryId) => {
+    setActionLoadingId(queryId)
+    try {
+      await adminService.resolveQuery(queryId)
+      setMessage('Support query marked as resolved.')
+      await loadAdminData()
+    } catch (err) {
+      setError(err.response?.data?.message || 'Unable to resolve the query')
+    } finally {
+      setActionLoadingId('')
+    }
+  }
+
+  if (loading) return <main className="min-h-screen p-6 text-(--text-secondary)">Loading admin dashboard...</main>
 
   return (
-    <main className="max-w-6xl mx-auto p-6 space-y-8 bg-[var(--bg)] min-h-screen">
-      <section className="bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl p-6 shadow-sm">
-        <p className="text-sm font-medium text-[var(--text-secondary)]">Master admin</p>
-        <h1 className="text-3xl font-bold text-[var(--text-primary)]">Payment approvals</h1>
-        <p className="mt-2 text-[var(--text-secondary)]">Verify each transaction in your payment account before approving it.</p>
-      </section>
-
-      {error && <p className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</p>}
-      {message && <p className="rounded-xl border border-green-200 bg-green-50 p-3 text-sm text-green-700">{message}</p>}
-
-      <section className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] shadow-sm overflow-hidden">
-        <div className="border-b border-[var(--border)] p-5">
-          <h2 className="text-lg font-bold text-[var(--text-primary)]">Pending payment requests</h2>
-        </div>
-        {paymentRequests.length === 0 ? (
-          <p className="p-5 text-sm text-[var(--text-secondary)]">No payment requests are waiting for review.</p>
-        ) : (
-          <div className="divide-y divide-[var(--border)]">
-            {paymentRequests.map((request) => (
-              <article key={request._id} className="p-5 space-y-4">
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                  <div>
-                    <p className="font-semibold text-[var(--text-primary)]">{request.user?.name || 'Unknown user'} <span className="font-normal text-[var(--text-secondary)]">({request.user?.email})</span></p>
-                    <p className="mt-1 text-sm text-[var(--text-secondary)] capitalize">{request.plan} plan · ₹{request.amount}</p>
-                    <p className="mt-1 text-sm text-[var(--text-secondary)]">Transaction ID: <span className="font-mono">{request.transactionId}</span></p>
-                    <p className="mt-1 text-sm text-[var(--text-secondary)]">Submitted {formatDate(request.createdAt)}</p>
-                    {request.proofUrl && (
-                      <a href={request.proofUrl} target="_blank" rel="noreferrer" className="mt-2 inline-block text-sm text-[var(--accent)] underline hover:text-[var(--accent-hover)] transition">
-                        Open payment proof
-                      </a>
-                    )}
-                  </div>
-                  <span className={`w-fit rounded-full px-3 py-1 text-sm font-medium capitalize ${statusStyle(request.status)}`}>{request.status}</span>
-                </div>
-
-                {rejectingId === request._id ? (
-                  <div className="flex flex-col gap-2 sm:flex-row">
-                    <input
-                      value={rejectionReason}
-                      onChange={(event) => setRejectionReason(event.target.value)}
-                      placeholder="Optional rejection reason"
-                      className="flex-1 rounded-xl border border-[var(--border)] p-2.5 text-sm text-[var(--text-primary)] placeholder-[var(--text-secondary)] outline-none focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--accent-light)] transition"
-                    />
-                    <button
-                      onClick={() => handleReject(request._id)}
-                      disabled={actionLoadingId === request._id}
-                      className="rounded-xl bg-red-600 px-4 py-2 text-sm text-[var(--text-on-accent)] font-semibold disabled:opacity-50 hover:bg-red-700 transition"
-                    >
-                      {actionLoadingId === request._id ? 'Rejecting...' : 'Confirm rejection'}
-                    </button>
-                    <button onClick={() => setRejectingId('')} className="rounded-xl border border-[var(--border)] px-4 py-2 text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition">Cancel</button>
-                  </div>
-                ) : (
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => setConfirmAction({
-                        type: 'approve',
-                        id: request._id,
-                        title: 'Approve payment?',
-                        message: 'Confirm that you verified this payment in your bank or UPI account.',
-                        confirmText: 'Approve',
-                        variant: 'warning',
-                      })}
-                      disabled={actionLoadingId === request._id}
-                      className="rounded-xl bg-[var(--btn-primary-bg)] px-5 py-2 text-sm text-[var(--text-on-accent)] font-semibold disabled:opacity-50 hover:bg-[var(--btn-primary-hover)] transition"
-                    >
-                      {actionLoadingId === request._id ? 'Approving...' : 'Approve'}
-                    </button>
-                    <button onClick={() => setRejectingId(request._id)} className="rounded-xl border border-red-300 px-4 py-2 text-sm text-red-700 hover:bg-red-50 transition">
-                      Reject
-                    </button>
-                  </div>
-                )}
-              </article>
-            ))}
+    <main className="min-h-screen bg-(--bg) p-4 sm:p-6">
+      <div className="mx-auto max-w-7xl space-y-6">
+        <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div><p className="text-sm font-semibold text-blue-600">MASTER ADMIN</p><h1 className="mt-1 text-3xl font-bold text-(--text-primary)">Administration overview</h1><p className="mt-1 text-sm text-(--text-secondary)">Manage subscriptions, payment approvals, and user support.</p></div>
+          <div className="relative self-start sm:self-auto">
+            <button onClick={() => setNotificationsOpen((isOpen) => !isOpen)} className="relative rounded-xl border border-(--border) bg-(--bg-card) px-4 py-2.5 text-sm font-semibold text-(--text-primary) shadow-sm hover:bg-(--bg) transition" aria-expanded={notificationsOpen}>
+              🔔 Notifications {notifications.length > 0 && <span className="ml-1 rounded-full bg-red-500 px-1.5 py-0.5 text-xs text-white">{notifications.length}</span>}
+            </button>
+            {notificationsOpen && <section className="absolute right-0 z-20 mt-2 w-[min(24rem,90vw)] overflow-hidden rounded-xl border border-(--border) bg-(--bg-card) shadow-xl">
+              <div className="border-b border-(--border) px-4 py-3"><h2 className="font-bold text-(--text-primary)">Needs your attention</h2></div>
+              {notifications.length === 0 ? <p className="p-4 text-sm text-(--text-secondary)">You are all caught up.</p> : <div className="max-h-96 overflow-y-auto divide-y divide-(--border)">{notifications.map((notice) => <div key={`${notice.type}-${notice.id}`} className="p-4"><p className="text-sm font-semibold text-(--text-primary)">{notice.title}</p><p className="mt-1 text-xs text-(--text-secondary)">{notice.detail}</p><p className="mt-1 text-xs text-(--text-secondary)">{formatDate(notice.createdAt)}</p>{notice.type === 'query' && <button onClick={() => handleResolveQuery(notice.id)} disabled={actionLoadingId === notice.id} className="mt-2 text-xs font-semibold text-blue-600 hover:underline disabled:opacity-50">Mark resolved</button>}</div>)}</div>}
+            </section>}
           </div>
-        )}
-      </section>
+        </header>
 
-      <section className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] shadow-sm overflow-hidden">
-        <div className="border-b border-[var(--border)] p-5">
-          <h2 className="text-lg font-bold text-[var(--text-primary)]">Current subscriptions</h2>
-        </div>
-        {subscriptions.length === 0 ? (
-          <p className="p-5 text-sm text-[var(--text-secondary)]">No active or historical subscriptions yet.</p>
-        ) : (
-          <div className="divide-y divide-[var(--border)]">
-            {subscriptions.map((subscription) => (
-              <article key={subscription._id} className="flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <p className="font-semibold text-[var(--text-primary)]">{subscription.user?.name || 'Unknown user'} <span className="font-normal text-[var(--text-secondary)]">({subscription.user?.email})</span></p>
-                  <p className="mt-1 text-sm text-[var(--text-secondary)] capitalize">{subscription.plan} · Ends {formatDate(subscription.endsAt)}</p>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className={`rounded-full px-3 py-1 text-sm font-medium capitalize ${statusStyle(subscription.status)}`}>{subscription.status}</span>
-                  {subscription.status === 'active' && (
-                    <button
-                      onClick={() => setConfirmAction({
-                        type: 'suspend',
-                        id: subscription.user._id,
-                        title: 'Suspend subscription?',
-                        message: 'Suspend this subscription? The user will return to free-plan limits.',
-                        confirmText: 'Suspend',
-                        variant: 'danger',
-                      })}
-                      disabled={actionLoadingId === subscription.user._id}
-                      className="rounded-xl border border-red-300 px-3 py-1.5 text-sm text-red-700 hover:bg-red-50 disabled:opacity-50 transition"
-                    >
-                      {actionLoadingId === subscription.user._id ? 'Suspending...' : 'Suspend'}
-                    </button>
-                  )}
-                </div>
-              </article>
-            ))}
-          </div>
-        )}
-      </section>
+        {error && <p className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</p>}
+        {message && <p className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-700">{message}</p>}
 
-      <ConfirmModal
-        isOpen={Boolean(confirmAction)}
-        title={confirmAction?.title || 'Confirm action'}
-        message={confirmAction?.message || ''}
-        confirmText={confirmAction?.confirmText || 'Confirm'}
-        variant={confirmAction?.variant || 'danger'}
-        onConfirm={handleConfirmAction}
-        onCancel={() => setConfirmAction(null)}
-      />
+        <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <MetricCard label="Total users" value={overview?.totalUsers ?? 0} hint="Registered customer accounts" icon="👥" />
+          <MetricCard label="Active users" value={overview?.activeUsers ?? 0} hint="Active in the last 5 minutes" icon="🟢" />
+          <MetricCard label="Subscribed users" value={overview?.subscribedUsers ?? 0} hint="Currently active paid plans" icon="✨" />
+          <MetricCard label="Pending approvals" value={overview?.pendingApprovals ?? 0} hint={`${overview?.openQueries ?? 0} open support queries`} icon="⏳" />
+        </section>
+
+        <section className="overflow-hidden rounded-2xl border border-(--border) bg-(--bg-card) shadow-sm">
+          <div className="flex items-center justify-between border-b border-(--border) px-5 py-4"><div><h2 className="font-bold text-(--text-primary)">User subscriptions</h2><p className="mt-1 text-sm text-(--text-secondary)">Approve or decline pending payments, and suspend active paid access.</p></div><span className="text-sm text-(--text-secondary)">{users.length} users</span></div>
+          <div className="overflow-x-auto"><table className="w-full min-w-[850px] text-left text-sm"><thead className="bg-(--bg)"><tr className="text-xs uppercase tracking-wide text-(--text-secondary)"><th className="px-5 py-3 font-semibold">User</th><th className="px-5 py-3 font-semibold">Subscription</th><th className="px-5 py-3 font-semibold">Payment status</th><th className="px-5 py-3 font-semibold">Activity</th><th className="px-5 py-3 font-semibold text-right">Actions</th></tr></thead><tbody className="divide-y divide-(--border)">{users.map((user) => {
+            const payment = user.latestPayment
+            const subscription = user.subscription
+            const isBusy = actionLoadingId === (payment?._id || user._id)
+            return <tr key={user._id} className="hover:bg-(--bg) transition"><td className="px-5 py-4"><p className="font-semibold text-(--text-primary)">{user.name}</p><p className="mt-0.5 text-xs text-(--text-secondary)">{user.email}</p></td><td className="px-5 py-4"><Badge tone={getTone(subscription?.status)}>{subscription?.plan || 'free'} {subscription?.status ? `· ${subscription.status}` : ''}</Badge></td><td className="px-5 py-4">{payment ? <Badge tone={getTone(payment.status)}>{payment.plan} · {payment.status}</Badge> : <span className="text-(--text-secondary)">No request</span>}</td><td className="px-5 py-4"><Badge tone={getTone(user.presence)}>{user.presence}</Badge><p className="mt-1 text-xs text-(--text-secondary)">Last seen {formatDate(user.lastSeenAt)}</p></td><td className="px-5 py-4 text-right"><div className="flex justify-end gap-2">{payment?.status === 'pending' && <><button onClick={() => setConfirmAction({ type: 'approve', id: payment._id, title: 'Approve payment?', message: `Confirm you verified ${user.name}'s payment before activating access.`, confirmText: 'Approve', variant: 'warning' })} disabled={isBusy} className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50">Approve</button><button onClick={() => setConfirmAction({ type: 'decline', id: payment._id, title: 'Decline payment?', message: `Decline ${user.name}'s pending payment request.`, confirmText: 'Decline', variant: 'danger' })} disabled={isBusy} className="rounded-lg border border-red-300 px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-50 disabled:opacity-50">Decline</button></>}{subscription?.status === 'active' && <button onClick={() => setConfirmAction({ type: 'suspend', id: user._id, title: 'Suspend subscription?', message: `${user.name} will return to the free-plan limits. Their data is not deleted.`, confirmText: 'Suspend', variant: 'danger' })} disabled={isBusy} className="rounded-lg border border-amber-300 px-3 py-1.5 text-xs font-semibold text-amber-700 hover:bg-amber-50 disabled:opacity-50">Suspend</button>}{payment?.status !== 'pending' && subscription?.status !== 'active' && <span className="text-xs text-(--text-secondary)">No actions available</span>}</div></td></tr>
+          })}</tbody></table></div>
+          {users.length === 0 && <p className="p-6 text-center text-sm text-(--text-secondary)">No registered users yet.</p>}
+        </section>
+      </div>
+      <ConfirmModal isOpen={Boolean(confirmAction)} title={confirmAction?.title || 'Confirm action'} message={confirmAction?.message || ''} confirmText={confirmAction?.confirmText || 'Confirm'} variant={confirmAction?.variant || 'danger'} onConfirm={handleAction} onCancel={() => setConfirmAction(null)} />
     </main>
   )
 }

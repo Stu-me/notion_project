@@ -23,6 +23,7 @@ app.use('/api/pages',require('./routers/pagesRouters'));
 app.use('/api/blocks',require('./routers/blocksRouters'));
 app.use('/api/payments', require('./routers/paymentRouters'));
 app.use('/api/admin', require('./routers/adminRouters'));
+app.use('/api/support', require('./routers/supportRouters'));
 
 
 

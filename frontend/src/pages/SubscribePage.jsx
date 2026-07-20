@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { paymentService } from '../services/paymentService'
+import { supportService } from '../services/supportService'
 import { useSubscription } from '../hooks/useSubscription'
 
 // Formats dates returned by MongoDB into a readable local date.
@@ -33,6 +34,9 @@ function SubscribePage() {
   const [proofUrl, setProofUrl] = useState('')
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
+  const [querySubject, setQuerySubject] = useState('')
+  const [queryMessage, setQueryMessage] = useState('')
+  const [submittingQuery, setSubmittingQuery] = useState(false)
   const [error, setError] = useState('')
   const [message, setMessage] = useState(() => {
     if (searchParams.get('reason') !== 'free-limit') return ''
@@ -102,6 +106,24 @@ function SubscribePage() {
       setError(err.response?.data?.message || 'Unable to submit the payment request')
     } finally {
       setSubmitting(false)
+    }
+  }
+
+  // Sends a support question to the admin notification queue without mixing it with payment requests.
+  const handleSupportQuery = async (event) => {
+    event.preventDefault()
+    setError('')
+    setMessage('')
+    setSubmittingQuery(true)
+    try {
+      await supportService.createQuery({ subject: querySubject, message: queryMessage })
+      setQuerySubject('')
+      setQueryMessage('')
+      setMessage('Your question was sent to the administrator.')
+    } catch (err) {
+      setError(err.response?.data?.message || 'Unable to send your question')
+    } finally {
+      setSubmittingQuery(false)
     }
   }
 
@@ -238,6 +260,16 @@ function SubscribePage() {
           </div>
         )}
       </section>
+
+      <form onSubmit={handleSupportQuery} className="rounded-xl border border-[var(--border)] bg-[var(--bg-card)] p-6 shadow-sm">
+        <h2 className="text-lg font-bold text-[var(--text-primary)]">Need help?</h2>
+        <p className="mt-1 text-sm text-[var(--text-secondary)]">Send a question directly to the administrator.</p>
+        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          <input value={querySubject} onChange={(event) => setQuerySubject(event.target.value)} maxLength="120" required placeholder="Question subject" className="rounded-xl border border-[var(--border)] p-2.5 text-sm text-[var(--text-primary)] placeholder-[var(--text-secondary)] outline-none focus:border-[var(--accent)]" />
+          <button disabled={submittingQuery} className="rounded-xl bg-[var(--accent)] px-4 py-2.5 text-sm font-semibold text-[var(--text-on-accent)] hover:bg-[var(--accent-hover)] disabled:opacity-50">{submittingQuery ? 'Sending...' : 'Send question'}</button>
+        </div>
+        <textarea value={queryMessage} onChange={(event) => setQueryMessage(event.target.value)} maxLength="2000" required placeholder="Describe what you need help with" className="mt-3 min-h-24 w-full rounded-xl border border-[var(--border)] p-2.5 text-sm text-[var(--text-primary)] placeholder-[var(--text-secondary)] outline-none focus:border-[var(--accent)]" />
+      </form>
     </main>
   )
 }
