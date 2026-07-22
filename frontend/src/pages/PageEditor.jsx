@@ -8,6 +8,88 @@ import { useBlocksReducer } from '../hooks/useBlocksReducer'
 import { useDebouncedSave } from '../hooks/useDebouncedSave'
 
 const BLOCK_TYPES = ['text', 'heading', 'todo', 'image']
+const SPOTIFY_STORAGE_KEY = 'pandawrite-spotify-embed-url'
+
+function normalizeSpotifyUrl(value) {
+  try {
+    const url = new URL(value.trim())
+    if (url.hostname !== 'open.spotify.com') return ''
+    const [resource, id] = url.pathname.split('/').filter(Boolean)
+    if (!['track', 'album', 'playlist', 'episode', 'show'].includes(resource) || !id) return ''
+    return `https://open.spotify.com/embed/${resource}/${id}`
+  } catch {
+    return ''
+  }
+}
+
+function SpotifyPlayer() {
+  const [spotifyUrl, setSpotifyUrl] = useState(() => localStorage.getItem(SPOTIFY_STORAGE_KEY) || '')
+  const [inputValue, setInputValue] = useState(spotifyUrl)
+  const [message, setMessage] = useState('')
+
+  const handleSubmit = (event) => {
+    event.preventDefault()
+    const embedUrl = normalizeSpotifyUrl(inputValue)
+    if (!embedUrl) {
+      setMessage('Paste a Spotify track, album, playlist, or podcast link.')
+      return
+    }
+
+    localStorage.setItem(SPOTIFY_STORAGE_KEY, embedUrl)
+    setSpotifyUrl(embedUrl)
+    setInputValue(embedUrl)
+    setMessage('')
+  }
+
+  const handleClear = () => {
+    localStorage.removeItem(SPOTIFY_STORAGE_KEY)
+    setSpotifyUrl('')
+    setInputValue('')
+    setMessage('')
+  }
+
+  return (
+    <aside className="h-fit rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-4 shadow-[var(--shadow-card)] lg:sticky lg:top-6">
+      <div className="flex items-center gap-3">
+        <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#1DB954] text-lg font-bold text-white">♫</span>
+        <div>
+          <h2 className="font-semibold text-[var(--text-primary)]">Write with music</h2>
+          <p className="text-xs text-[var(--text-secondary)]">Keep a Spotify player nearby</p>
+        </div>
+      </div>
+
+      {spotifyUrl ? (
+        <iframe
+          src={spotifyUrl}
+          title="Spotify music player"
+          className="mt-4 h-[352px] w-full rounded-xl border-0"
+          allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+          loading="lazy"
+        />
+      ) : (
+        <div className="mt-4 rounded-xl border border-dashed border-[var(--border)] px-4 py-8 text-center text-sm text-[var(--text-secondary)]">
+          Add a Spotify link to start listening while you write.
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit} className="mt-4 space-y-2">
+        <label htmlFor="spotify-link" className="text-xs font-semibold text-[var(--text-primary)]">Spotify link</label>
+        <input
+          id="spotify-link"
+          value={inputValue}
+          onChange={(event) => setInputValue(event.target.value)}
+          placeholder="Paste a Spotify link"
+          className="w-full rounded-xl border border-[var(--border)] bg-[var(--bg-input)] px-3 py-2 text-xs text-[var(--text-primary)] outline-none transition focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--accent-light)]"
+        />
+        {message && <p className="text-xs text-red-500">{message}</p>}
+        <div className="flex gap-2">
+          <button type="submit" className="flex-1 rounded-xl bg-[var(--btn-primary-bg)] px-3 py-2 text-xs font-semibold text-[var(--text-on-accent)] transition hover:bg-[var(--btn-primary-hover)]">Load player</button>
+          {spotifyUrl && <button type="button" onClick={handleClear} className="rounded-xl border border-[var(--border)] px-3 py-2 text-xs text-[var(--text-secondary)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]">Clear</button>}
+        </div>
+      </form>
+    </aside>
+  )
+}
 
 function PageEditor() {
   const { id } = useParams()
@@ -193,7 +275,10 @@ function PageEditor() {
   if (!page) return <h1 className="p-6 text-[var(--text-secondary)]">Page not found</h1>
 
   return (
-    <div className="max-w-3xl mx-auto p-6 bg-[var(--bg-card)] min-h-screen">
+    <div className="min-h-screen bg-[var(--bg)] p-4 sm:p-6">
+      <div className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-[280px_minmax(0,1fr)] lg:items-start">
+        <SpotifyPlayer />
+        <div className="min-h-screen bg-[var(--bg-card)] p-2 sm:p-4 lg:p-6">
       <div className="flex justify-between items-center mb-6">
         <button
           onClick={() => navigate('/dashboard')}
@@ -260,6 +345,8 @@ function PageEditor() {
         onConfirm={handleConfirmDeleteBlock}
         onCancel={() => setDeleteBlockConfirm(null)}
       />
+        </div>
+      </div>
     </div>
   )
 }
