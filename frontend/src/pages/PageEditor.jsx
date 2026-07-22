@@ -9,6 +9,7 @@ import { useDebouncedSave } from '../hooks/useDebouncedSave'
 
 const BLOCK_TYPES = ['text', 'heading', 'todo', 'image']
 const SPOTIFY_STORAGE_KEY = 'pandawrite-spotify-embed-url'
+const DEFAULT_SPOTIFY_LINK = 'https://open.spotify.com/track/6xr4S4BNFVaHlwlkYzyj6R?si=467c9c73a03f4201'
 
 function normalizeSpotifyUrl(value) {
   try {
@@ -23,8 +24,9 @@ function normalizeSpotifyUrl(value) {
 }
 
 function SpotifyPlayer() {
-  const [spotifyUrl, setSpotifyUrl] = useState(() => localStorage.getItem(SPOTIFY_STORAGE_KEY) || '')
-  const [inputValue, setInputValue] = useState(spotifyUrl)
+  const storedSpotifyUrl = localStorage.getItem(SPOTIFY_STORAGE_KEY)
+  const [spotifyUrl, setSpotifyUrl] = useState(() => storedSpotifyUrl || normalizeSpotifyUrl(DEFAULT_SPOTIFY_LINK))
+  const [inputValue, setInputValue] = useState(() => storedSpotifyUrl || DEFAULT_SPOTIFY_LINK)
   const [message, setMessage] = useState('')
 
   const handleSubmit = (event) => {
