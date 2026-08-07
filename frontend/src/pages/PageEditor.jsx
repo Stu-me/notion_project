@@ -7,7 +7,7 @@ import ConfirmModal from '../components/ConfirmModal'
 import { useBlocksReducer } from '../hooks/useBlocksReducer'
 import { useDebouncedSave } from '../hooks/useDebouncedSave'
 
-const BLOCK_TYPES = ['text', 'heading', 'todo', 'image']
+const BLOCK_TYPES = ['text', 'heading', 'todo', 'image', 'audio', 'youtube']
 
 function PageEditor() {
   const { id } = useParams()
@@ -100,8 +100,11 @@ function PageEditor() {
   }
 
   const handleTypeChange = (block, type) => {
-    const updatedBlock = { ...block, type }
+    // Media blocks require a URL or recording, so clear incompatible text when switching types.
+    const content = ['image', 'audio', 'youtube'].includes(type) ? '' : block.content
+    const updatedBlock = { ...block, type, content }
     dispatch({ type: 'UPDATE_BLOCK_TYPE', payload: { id: block._id, type } })
+    if (content !== block.content) dispatch({ type: 'UPDATE_BLOCK_CONTENT', payload: { id: block._id, content } })
     debouncedSave(block._id, updatedBlock)
   }
 

@@ -1,100 +1,38 @@
-function BlockRow({
-  block, onContentChange, onTypeChange, onDelete, onDragStart, onDrop,
-  registerRef, onAddAfter, onDeleteAndFocusPrevious, onArrowNav,
-  slashMenuOpen, onSlashOpen, onSlashClose, onSlashSelect,
-}) {
-  const handleKeyDown = (e) => {
-    if (e.key === 'Enter' && block.type !== 'text') {
-      // headings/todos/images: Enter still creates a new block, doesn't add newline
-      e.preventDefault()
-      onAddAfter(block._id)
-      return
-    }
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault()
-      onAddAfter(block._id)
-      return
-    }
-    if (e.key === 'Backspace' && block.content === '') {
-      e.preventDefault()
-      onDeleteAndFocusPrevious(block._id)
-      return
-    }
-    if (e.key === 'ArrowUp') {
-      onArrowNav(block._id, 'up')
-    }
-    if (e.key === 'ArrowDown') {
-      onArrowNav(block._id, 'down')
-    }
-  }
+import { useEffect, useRef, useState } from 'react'
+import SlashMenu from './SlashMenu'
+import { uploadService } from '../services/uploadService'
 
-  const handleChange = (e) => {
-    const value = e.target.value
-    onContentChange(block._id, value)
+// Converts common YouTube links to a safe iframe embed URL and rejects other hosts.
+function getYouTubeEmbedUrl(value) {
+  try {
+    const url = new URL(value)
+    let videoId = ''
+    if (url.hostname === 'youtu.be') videoId = url.pathname.slice(1)
+    if (url.hostname.endsWith('youtube.com')) videoId = url.searchParams.get('v') || url.pathname.split('/').filter(Boolean).pop()
+    return /^[A-Za-z0-9_-]{11}$/.test(videoId) ? `https://www.youtube-nocookie.com/embed/${videoId}` : ''
+  } catch { return '' }
+}
 
-    if (value === '/') {
-      onSlashOpen()
-    } else if (slashMenuOpen) {
-      onSlashClose()
-    }
-  }
+// Reads a Blob as a data URL so it can be sent to the authenticated upload endpoint.
+function readAsDataUrl(blob) { return new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(reader.result); reader.onerror = reject; reader.readAsDataURL(blob) }) }
 
-  const sharedProps = {
-    ref: registerRef,
-    value: block.content ?? '',
-    onChange: handleChange,
-    onKeyDown: handleKeyDown,
-  }
-
-  return (
-    <div
-      draggable
-      onDragStart={(e) => {
-        e.dataTransfer.setData('text/plain', block._id)
-        onDragStart(block._id)
-      }}
-      onDragOver={(e) => e.preventDefault()}
-      onDrop={(e) => onDrop(block._id, e.dataTransfer.getData('text/plain'))}
-      className="relative flex items-start gap-2 group cursor-move rounded-xl px-2 py-1 hover:bg-[var(--bg)] transition"
-    >
-      <span className="text-[var(--text-muted)] group-hover:text-[var(--text-secondary)] cursor-grab select-none transition">⠿</span>
-
-      <select
-        value={block.type}
-        onChange={(e) => onTypeChange(block, e.target.value)}
-        className="text-xs border border-[var(--border)] rounded-lg px-1.5 py-1 text-[var(--text-secondary)] bg-[var(--bg-card)] outline-none focus:border-[var(--accent)] transition"
-      >
-        {['text', 'heading', 'todo', 'image'].map((t) => (
-          <option key={t} value={t}>{t}</option>
-        ))}
-      </select>
-
-      <div className="flex-1 relative">
-        {block.type === 'heading' ? (
-          <input {...sharedProps} className="w-full text-xl font-semibold outline-none border-b border-[var(--border)] focus:border-[var(--accent)] text-[var(--text-primary)] placeholder-[var(--text-secondary)] transition" placeholder="Heading..." />
-        ) : block.type === 'todo' ? (
-          <div className="flex items-center gap-2">
-            <input type="checkbox" className="accent-[var(--accent)]" />
-            <input {...sharedProps} className="flex-1 outline-none text-[var(--text-primary)] placeholder-[var(--text-secondary)]" placeholder="To-do..." />
-          </div>
-        ) : block.type === 'image' ? (
-          <input {...sharedProps} className="w-full outline-none border-b border-[var(--border)] focus:border-[var(--accent)] text-[var(--text-primary)] placeholder-[var(--text-secondary)] transition" placeholder="Image URL..." />
-        ) : (
-          <textarea {...sharedProps} className="w-full outline-none resize-none text-[var(--text-primary)] placeholder-[var(--text-secondary)]" placeholder="Type '/' for commands..." rows={1} />
-        )}
-
-        {slashMenuOpen && <SlashMenu onSelect={onSlashSelect} onClose={onSlashClose} />}
-      </div>
-
-      <button
-        onClick={() => onDelete(block._id)}
-        className="opacity-0 group-hover:opacity-100 text-[var(--text-secondary)] hover:text-[var(--accent)] text-xs transition"
-      >
-        ✕
-      </button>
-    </div>
-  )
+// Renders and edits one block type, including media previews and browser microphone recording.
+function BlockRow({ block, onContentChange, onTypeChange, onDelete, onDragStart, onDrop, registerRef, onAddAfter, onDeleteAndFocusPrevious, onArrowNav, slashMenuOpen, onSlashOpen, onSlashClose, onSlashSelect }) {
+  const [recording, setRecording] = useState(false)
+  const [uploading, setUploading] = useState(false)
+  const [mediaError, setMediaError] = useState('')
+  const recorderRef = useRef(null)
+  const streamRef = useRef(null)
+  const chunksRef = useRef([])
+  // Stops microphone tracks when this row is removed or the editor navigates away.
+  useEffect(() => () => streamRef.current?.getTracks().forEach((track) => track.stop()), [])
+  const handleKeyDown = (event) => { if (['image', 'audio', 'youtube'].includes(block.type)) return; if (event.key === 'Enter' && block.type !== 'text') { event.preventDefault(); onAddAfter(block._id) } else if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); onAddAfter(block._id) } else if (event.key === 'Backspace' && block.content === '') { event.preventDefault(); onDeleteAndFocusPrevious(block._id) } else if (event.key === 'ArrowUp') onArrowNav(block._id, 'up'); else if (event.key === 'ArrowDown') onArrowNav(block._id, 'down') }
+  const handleChange = (event) => { const value = event.target.value; onContentChange(block._id, value); if (value === '/') onSlashOpen(); else if (slashMenuOpen) onSlashClose() }
+  const startRecording = async () => { setMediaError(''); if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) { setMediaError('Audio recording is not supported in this browser.'); return } try { const stream = await navigator.mediaDevices.getUserMedia({ audio: true }); const recorder = new MediaRecorder(stream, MediaRecorder.isTypeSupported('audio/webm;codecs=opus') ? { mimeType: 'audio/webm;codecs=opus', audioBitsPerSecond: 64000 } : undefined); streamRef.current = stream; chunksRef.current = []; recorder.ondataavailable = (event) => { if (event.data.size) chunksRef.current.push(event.data) }; recorder.onstop = async () => { setRecording(false); stream.getTracks().forEach((track) => track.stop()); setUploading(true); try { const mimeType = recorder.mimeType || 'audio/webm'; const dataUrl = await readAsDataUrl(new Blob(chunksRef.current, { type: mimeType })); const response = await uploadService.uploadAudio(dataUrl, mimeType); onContentChange(block._id, response.data.url) } catch (error) { setMediaError(error.response?.data?.message || 'Unable to upload the recording.') } finally { setUploading(false) } }; recorder.start(); recorderRef.current = recorder; setRecording(true) } catch { setMediaError('Microphone permission was denied or unavailable.') } }
+  const stopRecording = () => recorderRef.current?.state === 'recording' && recorderRef.current.stop()
+  const sharedProps = { ref: registerRef, value: block.content ?? '', onChange: handleChange, onKeyDown: handleKeyDown }
+  const inputClass = 'w-full rounded-lg border border-[var(--border)] bg-[var(--bg-input)] px-3 py-2.5 text-sm text-[var(--text-primary)] outline-none placeholder:text-[var(--text-secondary)] focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--accent-light)]'
+  return <div draggable onDragStart={(event) => { event.dataTransfer.setData('text/plain', block._id); onDragStart(block._id) }} onDragOver={(event) => event.preventDefault()} onDrop={(event) => onDrop(block._id, event.dataTransfer.getData('text/plain'))} className="group relative flex items-start gap-2 rounded-lg px-2 py-2 hover:bg-[var(--bg-hover)]"><span className="cursor-grab select-none pt-2 text-[var(--text-muted)]">⠿</span><select value={block.type} onChange={(event) => onTypeChange(block, event.target.value)} className="mt-1 rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-1.5 py-1 text-xs text-[var(--text-secondary)] outline-none focus:border-[var(--accent)]">{['text', 'heading', 'todo', 'image', 'audio', 'youtube'].map((type) => <option key={type} value={type}>{type}</option>)}</select><div className="relative min-w-0 flex-1">{block.type === 'heading' ? <input {...sharedProps} className="w-full border-b border-[var(--border)] bg-transparent text-xl font-semibold text-[var(--text-primary)] outline-none focus:border-[var(--accent)]" placeholder="Heading..." /> : block.type === 'todo' ? <div className="flex items-center gap-2"><input type="checkbox" className="accent-[var(--accent)]" /><input {...sharedProps} className="w-full bg-transparent text-[var(--text-primary)] outline-none" placeholder="To-do..." /></div> : block.type === 'image' ? <><input {...sharedProps} className={inputClass} placeholder="Paste an image URL..." />{block.content && <img src={block.content} alt="Embedded content" className="mt-3 max-h-96 rounded-lg border border-[var(--border)] object-contain" onError={(event) => { event.currentTarget.style.display = 'none' }} />}</> : block.type === 'youtube' ? <><input {...sharedProps} className={inputClass} placeholder="Paste a YouTube video URL..." />{block.content && (getYouTubeEmbedUrl(block.content) ? <iframe className="mt-3 aspect-video w-full rounded-lg border border-[var(--border)]" src={getYouTubeEmbedUrl(block.content)} title="YouTube video" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen /> : <p className="mt-2 text-xs text-red-600">Paste a valid YouTube or youtu.be URL.</p>)}</> : block.type === 'audio' ? <div className="rounded-lg border border-[var(--border)] bg-[var(--bg-card)] p-3"><div className="flex flex-wrap items-center gap-2"><button type="button" onClick={recording ? stopRecording : startRecording} disabled={uploading} className={`rounded-lg px-3 py-2 text-sm font-semibold text-white ${recording ? 'bg-red-600 hover:bg-red-700' : 'bg-[var(--btn-primary-bg)] hover:bg-[var(--btn-primary-hover)]'} disabled:opacity-50`}>{recording ? 'Stop recording' : uploading ? 'Uploading audio...' : 'Record audio'}</button>{recording && <span className="text-xs font-medium text-red-600">Recording…</span>}<span className="text-xs text-[var(--text-secondary)]">Short recordings up to 3 MB</span></div>{block.content && <audio className="mt-3 w-full" controls src={block.content}>Your browser cannot play this audio.</audio>}{mediaError && <p className="mt-2 text-xs text-red-600">{mediaError}</p>}</div> : <textarea {...sharedProps} className="w-full resize-none bg-transparent text-[var(--text-primary)] outline-none placeholder:text-[var(--text-secondary)]" placeholder="Type '/' for commands..." rows={1} />}{slashMenuOpen && <SlashMenu onSelect={onSlashSelect} onClose={onSlashClose} />}</div><button onClick={() => onDelete(block._id)} className="pt-2 text-xs text-[var(--text-secondary)] opacity-0 hover:text-red-600 group-hover:opacity-100">×</button></div>
 }
 
 export default BlockRow
-import SlashMenu from './SlashMenu'
