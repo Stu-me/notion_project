@@ -2,6 +2,19 @@ const Page = require("../models/pageModel");
 const Block = require("../models/blockModel");
 const asyncHandler = require("express-async-handler");
 
+// Ensures embeds point to web URLs instead of unsupported or unsafe URL schemes.
+const validateEmbedContent = (type, content) => {
+  if (!['image', 'youtube'].includes(type) || !content) return;
+  try {
+    const url = new URL(content);
+    if (!['http:', 'https:'].includes(url.protocol)) throw new Error('Unsupported URL protocol');
+  } catch {
+    const error = new Error(`${type === 'youtube' ? 'YouTube' : 'Image'} blocks require a valid http(s) URL`);
+    error.statusCode = 400;
+    throw error;
+  }
+};
+
 // @desc Get all blocks for a page
 // @route GET /pages/:pageId/blocks
 // @access private
@@ -39,11 +52,18 @@ const createBlock = asyncHandler(async (req, res) => {
     throw new Error("Forbidden to access");
   }
   const cntDocument = page.blocks.length;
+  try {
+    validateEmbedContent(req.body.type, req.body.content);
+  } catch (error) {
+    res.status(400);
+    throw error;
+  }
   const createdBlock = await Block.create({
     type: req.body.type,
     page: pageId,
     order: cntDocument,
     content: req.body.content,
+    properties: req.body.properties || {},
   });
   await Page.findByIdAndUpdate(pageId, { $push: { blocks: createdBlock._id } });
   return res.status(201).json(createdBlock);
@@ -69,9 +89,15 @@ const updateBlock = asyncHandler(async (req, res) => {
     res.status(403);
     throw new Error("You dont have access to this page");
   }
+  try {
+    validateEmbedContent(req.body.type, req.body.content);
+  } catch (error) {
+    res.status(400);
+    throw error;
+  }
   const updatedBlock = await Block.findByIdAndUpdate(
     blockId,
-    { content: req.body.content, type: req.body.type },
+    { content: req.body.content, type: req.body.type, properties: req.body.properties || {} },
     { new: true },
   );
   res.status(200).json(updatedBlock);

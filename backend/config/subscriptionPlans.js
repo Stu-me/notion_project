@@ -13,7 +13,7 @@ const FREE_TIER = Object.freeze({
     blocksPerPage: 20,
   },
   // All current block types remain free. Add future premium-only types separately.
-  blockTypes: ['text', 'heading', 'todo', 'image', 'audio'],
+  blockTypes: ['text', 'heading', 'todo', 'image', 'audio', 'youtube'],
 });
 
 // Returns the trusted plan configuration for a submitted plan name.

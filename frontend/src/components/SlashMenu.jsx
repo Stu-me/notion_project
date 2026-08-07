@@ -4,6 +4,7 @@ const OPTIONS = [
   { type: 'todo', label: 'To-do', hint: 'Checklist item' },
   { type: 'image', label: 'Image', hint: 'Embed via URL' },
   { type: 'audio', label: 'Audio', hint: 'Record a voice note' },
+  { type: 'youtube', label: 'YouTube', hint: 'Embed a video URL' },
 ]
 
 function SlashMenu({ onSelect }) {

@@ -7,7 +7,7 @@ import ConfirmModal from '../components/ConfirmModal'
 import { useBlocksReducer } from '../hooks/useBlocksReducer'
 import { useDebouncedSave } from '../hooks/useDebouncedSave'
 
-const BLOCK_TYPES = ['text', 'heading', 'todo', 'image', 'audio']
+const BLOCK_TYPES = ['text', 'heading', 'todo', 'image', 'audio', 'youtube']
 const SPOTIFY_STORAGE_KEY = 'pandawrite-spotify-embed-url'
 const DEFAULT_SPOTIFY_LINK = 'https://open.spotify.com/track/6xr4S4BNFVaHlwlkYzyj6R?si=467c9c73a03f4201'
 
@@ -39,7 +39,7 @@ function SpotifyPlayer() {
 
     localStorage.setItem(SPOTIFY_STORAGE_KEY, embedUrl)
     setSpotifyUrl(embedUrl)
-    setInputValue(embedUrl)
+    setInputValue(inputValue.trim())
     setMessage('')
   }
 
@@ -54,40 +54,14 @@ function SpotifyPlayer() {
     <aside className="h-fit rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-4 shadow-[var(--shadow-card)] lg:sticky lg:top-6">
       <div className="flex items-center gap-3">
         <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#1DB954] text-lg font-bold text-white">♫</span>
-        <div>
-          <h2 className="font-semibold text-[var(--text-primary)]">Write with music</h2>
-          <p className="text-xs text-[var(--text-secondary)]">Keep a Spotify player nearby</p>
-        </div>
+        <div><h2 className="font-semibold text-[var(--text-primary)]">Write with music</h2><p className="text-xs text-[var(--text-secondary)]">Keep a Spotify player nearby</p></div>
       </div>
-
-      {spotifyUrl ? (
-        <iframe
-          src={spotifyUrl}
-          title="Spotify music player"
-          className="mt-4 h-[352px] w-full rounded-xl border-0"
-          allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-          loading="lazy"
-        />
-      ) : (
-        <div className="mt-4 rounded-xl border border-dashed border-[var(--border)] px-4 py-8 text-center text-sm text-[var(--text-secondary)]">
-          Add a Spotify link to start listening while you write.
-        </div>
-      )}
-
+      {spotifyUrl ? <iframe src={spotifyUrl} title="Spotify music player" className="mt-4 h-[352px] w-full rounded-xl border-0" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy" /> : <div className="mt-4 rounded-xl border border-dashed border-[var(--border)] px-4 py-8 text-center text-sm text-[var(--text-secondary)]">Add a Spotify link to start listening while you write.</div>}
       <form onSubmit={handleSubmit} className="mt-4 space-y-2">
         <label htmlFor="spotify-link" className="text-xs font-semibold text-[var(--text-primary)]">Spotify link</label>
-        <input
-          id="spotify-link"
-          value={inputValue}
-          onChange={(event) => setInputValue(event.target.value)}
-          placeholder="Paste a Spotify link"
-          className="w-full rounded-xl border border-[var(--border)] bg-[var(--bg-input)] px-3 py-2 text-xs text-[var(--text-primary)] outline-none transition focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--accent-light)]"
-        />
+        <input id="spotify-link" value={inputValue} onChange={(event) => setInputValue(event.target.value)} placeholder="Paste a Spotify link" className="w-full rounded-xl border border-[var(--border)] bg-[var(--bg-input)] px-3 py-2 text-xs text-[var(--text-primary)] outline-none transition focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--accent-light)]" />
         {message && <p className="text-xs text-red-500">{message}</p>}
-        <div className="flex gap-2">
-          <button type="submit" className="flex-1 rounded-xl bg-[var(--btn-primary-bg)] px-3 py-2 text-xs font-semibold text-[var(--text-on-accent)] transition hover:bg-[var(--btn-primary-hover)]">Load player</button>
-          {spotifyUrl && <button type="button" onClick={handleClear} className="rounded-xl border border-[var(--border)] px-3 py-2 text-xs text-[var(--text-secondary)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]">Clear</button>}
-        </div>
+        <div className="flex gap-2"><button type="submit" className="flex-1 rounded-xl bg-[var(--btn-primary-bg)] px-3 py-2 text-xs font-semibold text-[var(--text-on-accent)] transition hover:bg-[var(--btn-primary-hover)]">Load player</button>{spotifyUrl && <button type="button" onClick={handleClear} className="rounded-xl border border-[var(--border)] px-3 py-2 text-xs text-[var(--text-secondary)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]">Clear</button>}</div>
       </form>
     </aside>
   )
@@ -133,6 +107,7 @@ function PageEditor() {
       await blockService.update(block._id, {
         content: block.content,
         type: block.type,
+        properties: block.properties || {},
       })
       dispatch({ type: 'SET_STATUS', payload: 'idle' })
     } catch (err) {
@@ -184,8 +159,20 @@ function PageEditor() {
   }
 
   const handleTypeChange = (block, type) => {
-    const updatedBlock = { ...block, type }
+    // Media blocks require a URL or recording, so clear incompatible text when switching types.
+    const content = ['image', 'audio', 'youtube'].includes(type) ? '' : block.content
+    const properties = type === 'heading' ? { headingLevel: 'h2', color: 'default' } : type === 'text' ? { textStyle: 'normal', color: 'default' } : {}
+    const updatedBlock = { ...block, type, content, properties }
     dispatch({ type: 'UPDATE_BLOCK_TYPE', payload: { id: block._id, type } })
+    if (content !== block.content) dispatch({ type: 'UPDATE_BLOCK_CONTENT', payload: { id: block._id, content } })
+    dispatch({ type: 'UPDATE_BLOCK_PROPERTIES', payload: { id: block._id, properties } })
+    debouncedSave(block._id, updatedBlock)
+  }
+
+  // Persists presentation metadata separately so content remains simple searchable text.
+  const handlePropertiesChange = (block, properties) => {
+    const updatedBlock = { ...block, properties: { ...block.properties, ...properties } }
+    dispatch({ type: 'UPDATE_BLOCK_PROPERTIES', payload: { id: block._id, properties: updatedBlock.properties } })
     debouncedSave(block._id, updatedBlock)
   }
 
@@ -228,9 +215,11 @@ function PageEditor() {
   }
 
   const handleSlashSelect = (block, type) => {
-    const updatedBlock = { ...block, type, content: '' }
+    const properties = type === 'heading' ? { headingLevel: 'h2', color: 'default' } : type === 'text' ? { textStyle: 'normal', color: 'default' } : {}
+    const updatedBlock = { ...block, type, content: '', properties }
     dispatch({ type: 'UPDATE_BLOCK_TYPE', payload: { id: block._id, type } })
     dispatch({ type: 'UPDATE_BLOCK_CONTENT', payload: { id: block._id, content: '' } })
+    dispatch({ type: 'UPDATE_BLOCK_PROPERTIES', payload: { id: block._id, properties } })
     setSlashMenuFor(null)
     debouncedSave(block._id, updatedBlock)
     requestAnimationFrame(() => blockRefs.current[block._id]?.focus())
@@ -312,6 +301,7 @@ function PageEditor() {
               }}
               onContentChange={handleContentChange}
               onTypeChange={handleTypeChange}
+              onPropertiesChange={handlePropertiesChange}
               onDelete={(blockId) => setDeleteBlockConfirm(blockId)}
               onDragStart={handleDragStart}
               onDrop={handleDrop}
