@@ -42,6 +42,14 @@ function blocksReducer(state, action) {
         ),
       };
 
+    case "UPDATE_BLOCK_PROPERTIES":
+      return {
+        ...state,
+        blocks: state.blocks.map((b) =>
+          b._id === action.payload.id ? { ...b, properties: action.payload.properties } : b,
+        ),
+      };
+
     case "DELETE_BLOCK":
       return {
         ...state,

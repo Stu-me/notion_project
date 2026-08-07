@@ -17,7 +17,9 @@ const blockSchema = mongoose.Schema({
     },
     content:{
         type:String,
-    }
+    },
+    // Stores presentation metadata (heading level, text colour, and writing style) separately from the content.
+    properties: { type: mongoose.Schema.Types.Mixed, default: {} },
 },
 {
     timestamps:true

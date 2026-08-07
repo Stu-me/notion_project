@@ -63,6 +63,7 @@ const createBlock = asyncHandler(async (req, res) => {
     page: pageId,
     order: cntDocument,
     content: req.body.content,
+    properties: req.body.properties || {},
   });
   await Page.findByIdAndUpdate(pageId, { $push: { blocks: createdBlock._id } });
   return res.status(201).json(createdBlock);
@@ -96,7 +97,7 @@ const updateBlock = asyncHandler(async (req, res) => {
   }
   const updatedBlock = await Block.findByIdAndUpdate(
     blockId,
-    { content: req.body.content, type: req.body.type },
+    { content: req.body.content, type: req.body.type, properties: req.body.properties || {} },
     { new: true },
   );
   res.status(200).json(updatedBlock);

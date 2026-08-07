@@ -49,6 +49,7 @@ function PageEditor() {
       await blockService.update(block._id, {
         content: block.content,
         type: block.type,
+        properties: block.properties || {},
       })
       dispatch({ type: 'SET_STATUS', payload: 'idle' })
     } catch (err) {
@@ -102,9 +103,18 @@ function PageEditor() {
   const handleTypeChange = (block, type) => {
     // Media blocks require a URL or recording, so clear incompatible text when switching types.
     const content = ['image', 'audio', 'youtube'].includes(type) ? '' : block.content
-    const updatedBlock = { ...block, type, content }
+    const properties = type === 'heading' ? { headingLevel: 'h2', color: 'default' } : type === 'text' ? { textStyle: 'normal', color: 'default' } : {}
+    const updatedBlock = { ...block, type, content, properties }
     dispatch({ type: 'UPDATE_BLOCK_TYPE', payload: { id: block._id, type } })
     if (content !== block.content) dispatch({ type: 'UPDATE_BLOCK_CONTENT', payload: { id: block._id, content } })
+    dispatch({ type: 'UPDATE_BLOCK_PROPERTIES', payload: { id: block._id, properties } })
+    debouncedSave(block._id, updatedBlock)
+  }
+
+  // Persists presentation metadata separately so content remains simple searchable text.
+  const handlePropertiesChange = (block, properties) => {
+    const updatedBlock = { ...block, properties: { ...block.properties, ...properties } }
+    dispatch({ type: 'UPDATE_BLOCK_PROPERTIES', payload: { id: block._id, properties: updatedBlock.properties } })
     debouncedSave(block._id, updatedBlock)
   }
 
@@ -147,9 +157,11 @@ function PageEditor() {
   }
 
   const handleSlashSelect = (block, type) => {
-    const updatedBlock = { ...block, type, content: '' }
+    const properties = type === 'heading' ? { headingLevel: 'h2', color: 'default' } : type === 'text' ? { textStyle: 'normal', color: 'default' } : {}
+    const updatedBlock = { ...block, type, content: '', properties }
     dispatch({ type: 'UPDATE_BLOCK_TYPE', payload: { id: block._id, type } })
     dispatch({ type: 'UPDATE_BLOCK_CONTENT', payload: { id: block._id, content: '' } })
+    dispatch({ type: 'UPDATE_BLOCK_PROPERTIES', payload: { id: block._id, properties } })
     setSlashMenuFor(null)
     debouncedSave(block._id, updatedBlock)
     requestAnimationFrame(() => blockRefs.current[block._id]?.focus())
@@ -228,6 +240,7 @@ function PageEditor() {
               }}
               onContentChange={handleContentChange}
               onTypeChange={handleTypeChange}
+              onPropertiesChange={handlePropertiesChange}
               onDelete={(blockId) => setDeleteBlockConfirm(blockId)}
               onDragStart={handleDragStart}
               onDrop={handleDrop}
