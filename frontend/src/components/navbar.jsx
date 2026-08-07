@@ -18,7 +18,8 @@ function Navbar() {
   const [toast, setToast] = useState(getSavedToast)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
-  const links = [{ to: '/dashboard', label: 'Dashboard' }, { to: '/subscribe', label: 'Subscription' }]
+  // Keeps primary product pages visible in the desktop and mobile taskbar.
+  const links = [{ to: '/dashboard', label: 'Dashboard' }, { to: '/subscribe', label: 'Subscription' }, { to: '/about', label: 'About' }]
   if (user?.role === 'masterAdmin') links.push({ to: '/admin/payments', label: 'Admin' })
   const linkClass = ({ isActive }) => `rounded-lg px-3 py-2 text-sm font-medium ${isActive ? 'bg-[var(--accent-light)] text-[var(--accent)]' : 'text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]'}`
 
