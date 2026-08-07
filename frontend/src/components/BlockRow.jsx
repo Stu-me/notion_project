@@ -59,7 +59,7 @@ function AudioRecorder({ block, onContentChange }) {
         streamRef.current = null
         setUploading(true)
         try {
-          const mimeType = recorder.mimeType || 'audio/webm'
+          const mimeType = recorder.mimeType?.split(';')[0] || 'audio/webm'
           const dataUrl = await readAsDataUrl(new Blob(chunksRef.current, { type: mimeType }))
           const response = await uploadService.uploadAudio(dataUrl, mimeType)
           onContentChange(block._id, response.data.url)

@@ -6,15 +6,20 @@ const crypto = require('crypto');
 const MAX_AUDIO_BYTES = 3 * 1024 * 1024;
 const ALLOWED_AUDIO_TYPES = new Set(['audio/webm', 'audio/ogg', 'audio/mp4', 'audio/mpeg']);
 
+const normalizeMimeType = (value) => value?.split(';')[0]?.trim().toLowerCase();
+
 // Saves a short browser-recorded audio clip locally and returns a URL suitable for an audio block.
 const uploadAudio = asyncHandler(async (req, res) => {
-  const { audioData, mimeType } = req.body;
-  if (!audioData || !ALLOWED_AUDIO_TYPES.has(mimeType)) {
+  const { audioData } = req.body;
+  const mimeType = normalizeMimeType(req.body?.mimeType);
+
+  if (!audioData || !mimeType || !ALLOWED_AUDIO_TYPES.has(mimeType)) {
     res.status(400);
     throw new Error('A supported audio recording is required');
   }
 
-  const encodedAudio = audioData.replace(/^data:audio\/[\w.+-]+;base64,/, '');
+  const base64Match = audioData.match(/^data:[^,]+;base64,(.+)$/i);
+  const encodedAudio = base64Match ? base64Match[1] : audioData;
   const buffer = Buffer.from(encodedAudio, 'base64');
   if (!buffer.length || buffer.length > MAX_AUDIO_BYTES) {
     res.status(400);
