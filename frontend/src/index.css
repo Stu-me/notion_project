@@ -146,3 +146,38 @@ body {
     background-position: 62% center;
   }
 }
+
+.audio-waveform {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  height: 56px;
+  overflow: hidden;
+  border-radius: 0.75rem;
+  background: var(--bg);
+  padding: 0 0.75rem;
+}
+
+.audio-wave-bar {
+  width: 3px;
+  height: 12px;
+  border-radius: 999px;
+  background: var(--accent);
+  opacity: 0.4;
+  transform-origin: center;
+}
+
+.audio-waveform-recording .audio-wave-bar {
+  opacity: 1;
+  animation: audio-wave-pulse 0.8s ease-in-out infinite alternate;
+}
+
+.audio-wave-bar:nth-child(2n) { animation-delay: -0.2s; }
+.audio-wave-bar:nth-child(3n) { animation-delay: -0.45s; }
+.audio-wave-bar:nth-child(5n) { animation-delay: -0.65s; }
+
+@keyframes audio-wave-pulse {
+  from { transform: scaleY(0.35); }
+  to { transform: scaleY(2.4); }
+}

@@ -64,7 +64,7 @@ function BlockRow({
         onChange={(e) => onTypeChange(block, e.target.value)}
         className="text-xs border border-[var(--border)] rounded-lg px-1.5 py-1 text-[var(--text-secondary)] bg-[var(--bg-card)] outline-none focus:border-[var(--accent)] transition"
       >
-        {['text', 'heading', 'todo', 'image'].map((t) => (
+        {['text', 'heading', 'todo', 'image', 'audio'].map((t) => (
           <option key={t} value={t}>{t}</option>
         ))}
       </select>
@@ -79,6 +79,8 @@ function BlockRow({
           </div>
         ) : block.type === 'image' ? (
           <input {...sharedProps} className="w-full outline-none border-b border-[var(--border)] focus:border-[var(--accent)] text-[var(--text-primary)] placeholder-[var(--text-secondary)] transition" placeholder="Image URL..." />
+        ) : block.type === 'audio' ? (
+          <AudioBlock block={block} onContentChange={onContentChange} />
         ) : (
           <textarea {...sharedProps} className="w-full outline-none resize-none text-[var(--text-primary)] placeholder-[var(--text-secondary)]" placeholder="Type '/' for commands..." rows={1} />
         )}
@@ -98,3 +100,4 @@ function BlockRow({
 
 export default BlockRow
 import SlashMenu from './SlashMenu'
+import AudioBlock from './AudioBlock'

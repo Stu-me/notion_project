@@ -1,5 +1,5 @@
-const Block = require("../models/blockModel");
 const Page = require("../models/pageModel");
+const Block = require("../models/blockModel");
 const asyncHandler = require("express-async-handler");
 
 // @desc Get all blocks for a page

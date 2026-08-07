@@ -7,7 +7,7 @@ import ConfirmModal from '../components/ConfirmModal'
 import { useBlocksReducer } from '../hooks/useBlocksReducer'
 import { useDebouncedSave } from '../hooks/useDebouncedSave'
 
-const BLOCK_TYPES = ['text', 'heading', 'todo', 'image']
+const BLOCK_TYPES = ['text', 'heading', 'todo', 'image', 'audio']
 const SPOTIFY_STORAGE_KEY = 'pandawrite-spotify-embed-url'
 const DEFAULT_SPOTIFY_LINK = 'https://open.spotify.com/track/6xr4S4BNFVaHlwlkYzyj6R?si=467c9c73a03f4201'
 
