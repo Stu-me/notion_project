@@ -4,7 +4,7 @@ const blockSchema = mongoose.Schema({
     type:{ // what type of data in the block 
         type:String,
         required:true,
-        enum:['text','heading','todo','image']
+        enum:['text','heading','todo','image','audio','youtube']
     },
     order:{ 
         type:Number,
@@ -17,7 +17,9 @@ const blockSchema = mongoose.Schema({
     },
     content:{
         type:String,
-    }
+    },
+    // Stores presentation metadata (heading level, text colour, and writing style) separately from the content.
+    properties: { type: mongoose.Schema.Types.Mixed, default: {} },
 },
 {
     timestamps:true

@@ -1,135 +1,81 @@
 @import 'tailwindcss';
 
-/* ─── Pandawrite — Kung Fu Panda Theme ───
- *
- *  Gold    (#C29336 / #F0C001) — heroism, inner power, Dragon Warrior
- *  Black   (#141414)            — Po's markings, ink-wash art, yin
- *  White   (#F2F3F4)            — panda fur, balance, yang
- *  Jade    (#2D8A6B)            — wisdom, spiritual chi, Master Oogway
- * ─────────────────────────────────────────── */
+/* Makes Tailwind dark: utilities follow the app's saved theme button, not OS preference. */
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
 
+/* Shared product tokens: jade is the action colour; gold is reserved for premium and pending states. */
 :root {
-  /* Backgrounds */
-  --bg: #F2F3F4;
-  --bg-card: #FFFFFF;
-  --bg-elevated: #FFFFFF;
-  --bg-sidebar: #FFFFFF;
-  --bg-hover: #F2F3F4;
-  --bg-nav: #FFFFFF;
-  --bg-input: #FFFFFF;
-
-  /* Text */
-  --text-primary: #141414;
-  --text-secondary: #6B7280;
-  --text-muted: #9CA3AF;
-  --text-on-accent: #FFFFFF;
-
-  /* Logo */
-  --logo-color: #15803D;
+  --bg: #f8fafc;
+  --bg-card: #ffffff;
+  --bg-elevated: #ffffff;
+  --bg-hover: #f1f5f9;
+  --bg-nav: rgba(255, 255, 255, 0.92);
+  --bg-input: #ffffff;
+  --text-primary: #101828;
+  --text-secondary: #667085;
+  --text-muted: #98a2b3;
+  --text-on-accent: #ffffff;
+  --logo-color: #15803d;
   --logo-color-hover: #166534;
-
-  /* Gold — primary accent (Dragon Warrior) */
-  --accent: #7c6219;
-  --accent-hover: #c3b393;
-  --accent-light: rgba(194, 147, 54, 0.12);
-  --accent-ring: rgba(194, 147, 54, 0.30);
-
-  /* Jade — secondary accent (Master Oogway) */
-  --jade: #2D8A6B;
-  --jade-light: rgba(45, 138, 107, 0.12);
-
-  /* Borders */
-  --border: #D4D0C5;
-  --border-light: #E8E4DC;
-
-  /* Buttons */
-  --btn-primary-bg: #f1a76ee7;
-  --btn-primary-text: #FFFFFF;
-  --btn-primary-hover: #D4A84B;
-  --btn-secondary-bg: #F2F3F4;
-  --btn-secondary-text: #141414;
-  --btn-secondary-border: #D4D0C5;
-
-  /* Shadows */
-  --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.06);
-  --shadow-elevated: 0 10px 25px -5px rgba(0, 0, 0, 0.08);
-
-  /* Nav */
-  --nav-border: #D4D0C5;
-
-  /* Misc */
-  --toggle-bg: #E8E4DC;
-  --toggle-dot: #FFFFFF;
-  --selection: rgba(194, 147, 54, 0.25);
-
-  --about-ink: #101310;
-  --about-paper: #F2F3F4;
-  --about-gold: #C29336;
-  --about-gold-light: #F0C001;
-  --about-jade: #1E604C;
+  --accent: #15803d;
+  --accent-hover: #166534;
+  --accent-light: #dcfce7;
+  --accent-ring: rgba(21, 128, 61, 0.22);
+  --gold: #d97706;
+  --gold-light: #fff7ed;
+  --border: #eaecf0;
+  --border-light: #f2f4f7;
+  --btn-primary-bg: #15803d;
+  --btn-primary-hover: #166534;
+  --btn-secondary-bg: #ffffff;
+  --shadow-card: 0 1px 2px rgba(16, 24, 40, 0.06), 0 1px 3px rgba(16, 24, 40, 0.1);
+  --shadow-elevated: 0 12px 28px rgba(16, 24, 40, 0.12);
+  --nav-border: #eaecf0;
+  --toggle-bg: #d0d5dd;
+  --toggle-dot: #ffffff;
+  --selection: rgba(21, 128, 61, 0.22);
 }
 
-/* ─── Dark Theme — Ink Wash ─── */
+/* Dark values preserve contrast while keeping the same jade brand identity. */
 [data-theme='dark'] {
-  --bg: #141414;
-  --bg-card: #1F1F1F;
-  --bg-elevated: #2A2A2A;
-  --bg-sidebar: #1F1F1F;
-  --bg-hover: #2A2A2A;
-  --bg-nav: #1F1F1F;
-  --bg-input: #1F1F1F;
-
-  --text-primary: #F2F3F4;
-  --text-secondary: #9CA3AF;
-  --text-muted: #6B7280;
-  --text-on-accent: #141414;
-
-  /* Logo */
-  --logo-color: #46bc71;
-  --logo-color-hover: #86EFAC;
-
-  --accent: #F0C001;
-  --accent-hover: #FFD633;
-  --accent-light: rgba(240, 192, 1, 0.15);
-  --accent-ring: rgba(240, 192, 1, 0.35);
-
-  --jade: #2D8A6B;
-  --jade-light: rgba(45, 138, 107, 0.20);
-
-  --border: #333333;
-  --border-light: #2A2A2A;
-
-  --btn-primary-bg: #F0C001;
-  --btn-primary-text: #141414;
-  --btn-primary-hover: #FFD633;
-  --btn-secondary-bg: #2A2A2A;
-  --btn-secondary-text: #F2F3F4;
-  --btn-secondary-border: #333333;
-
-  --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.40);
-  --shadow-elevated: 0 10px 25px -5px rgba(0, 0, 0, 0.50);
-
-  --nav-border: #333333;
-
-  --toggle-bg: #333333;
-  --toggle-dot: #F2F3F4;
-  --selection: rgba(240, 192, 1, 0.30);
+  --bg: #101828;
+  --bg-card: #1d2939;
+  --bg-elevated: #344054;
+  --bg-hover: #344054;
+  --bg-nav: rgba(16, 24, 40, 0.92);
+  --bg-input: #1d2939;
+  --text-primary: #f9fafb;
+  --text-secondary: #cbd5e1;
+  --text-muted: #98a2b3;
+  --text-on-accent: #ffffff;
+  --logo-color: #86efac;
+  --logo-color-hover: #bbf7d0;
+  --accent: #22c55e;
+  --accent-hover: #4ade80;
+  --accent-light: rgba(34, 197, 94, 0.16);
+  --accent-ring: rgba(74, 222, 128, 0.25);
+  --gold: #fbbf24;
+  --gold-light: rgba(251, 191, 36, 0.14);
+  --border: #344054;
+  --border-light: #475467;
+  --btn-primary-bg: #16a34a;
+  --btn-primary-hover: #22c55e;
+  --btn-secondary-bg: #1d2939;
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.25);
+  --shadow-elevated: 0 16px 36px rgba(0, 0, 0, 0.38);
+  --nav-border: #344054;
+  --toggle-bg: #475467;
+  --toggle-dot: #f8fafc;
+  --selection: rgba(74, 222, 128, 0.25);
 }
 
-/* ─── Global resets & transitions ─── */
-* {
-  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
-}
-
-body {
-  background-color: var(--bg);
-  color: var(--text-primary);
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
-}
-
-::selection {
-  background: var(--selection);
-}
+* { box-sizing: border-box; }
+html { color-scheme: light; }
+html[data-theme='dark'] { color-scheme: dark; }
+body { margin: 0; background: var(--bg); color: var(--text-primary); font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+button, input, textarea, select { font: inherit; }
+button, a, input, textarea, select { transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease, box-shadow 160ms ease, transform 160ms ease; }
+::selection { background: var(--selection); }
 
 .about-hero {
   background-image: linear-gradient(90deg, rgba(10, 14, 11, 0.96) 0%, rgba(10, 14, 11, 0.8) 42%, rgba(10, 14, 11, 0.35) 100%), url("https://cdn.builder.io/api/v1/image/assets%2F481ba09978d54704bfa5b3045d7a60a9%2F4cb4e41761ff454b803849b441291259?format=webp&width=1600&height=1000");
@@ -137,12 +83,16 @@ body {
   background-size: cover;
 }
 
-.about-page {
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
-}
+.about-page { font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
 
 @media (max-width: 640px) {
-  .about-hero {
-    background-position: 62% center;
-  }
+  .about-hero { background-position: 62% center; }
 }
+
+.audio-waveform { display: flex; align-items: center; justify-content: center; gap: 3px; height: 56px; overflow: hidden; border-radius: 0.75rem; background: var(--bg); padding: 0 0.75rem; }
+.audio-wave-bar { width: 3px; height: 12px; border-radius: 999px; background: var(--accent); opacity: 0.4; transform-origin: center; }
+.audio-waveform-recording .audio-wave-bar { opacity: 1; animation: audio-wave-pulse 0.8s ease-in-out infinite alternate; }
+.audio-wave-bar:nth-child(2n) { animation-delay: -0.2s; }
+.audio-wave-bar:nth-child(3n) { animation-delay: -0.45s; }
+.audio-wave-bar:nth-child(5n) { animation-delay: -0.65s; }
+@keyframes audio-wave-pulse { from { transform: scaleY(0.35); } to { transform: scaleY(2.4); } }

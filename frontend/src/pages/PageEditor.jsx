@@ -7,7 +7,65 @@ import ConfirmModal from '../components/ConfirmModal'
 import { useBlocksReducer } from '../hooks/useBlocksReducer'
 import { useDebouncedSave } from '../hooks/useDebouncedSave'
 
-const BLOCK_TYPES = ['text', 'heading', 'todo', 'image']
+const BLOCK_TYPES = ['text', 'heading', 'todo', 'image', 'audio', 'youtube']
+const SPOTIFY_STORAGE_KEY = 'pandawrite-spotify-embed-url'
+const DEFAULT_SPOTIFY_LINK = 'https://open.spotify.com/track/6xr4S4BNFVaHlwlkYzyj6R?si=467c9c73a03f4201'
+
+function normalizeSpotifyUrl(value) {
+  try {
+    const url = new URL(value.trim())
+    if (url.hostname !== 'open.spotify.com') return ''
+    const [resource, id] = url.pathname.split('/').filter(Boolean)
+    if (!['track', 'album', 'playlist', 'episode', 'show'].includes(resource) || !id) return ''
+    return `https://open.spotify.com/embed/${resource}/${id}`
+  } catch {
+    return ''
+  }
+}
+
+function SpotifyPlayer() {
+  const storedSpotifyUrl = localStorage.getItem(SPOTIFY_STORAGE_KEY)
+  const [spotifyUrl, setSpotifyUrl] = useState(() => storedSpotifyUrl || normalizeSpotifyUrl(DEFAULT_SPOTIFY_LINK))
+  const [inputValue, setInputValue] = useState(() => storedSpotifyUrl || DEFAULT_SPOTIFY_LINK)
+  const [message, setMessage] = useState('')
+
+  const handleSubmit = (event) => {
+    event.preventDefault()
+    const embedUrl = normalizeSpotifyUrl(inputValue)
+    if (!embedUrl) {
+      setMessage('Paste a Spotify track, album, playlist, or podcast link.')
+      return
+    }
+
+    localStorage.setItem(SPOTIFY_STORAGE_KEY, embedUrl)
+    setSpotifyUrl(embedUrl)
+    setInputValue(inputValue.trim())
+    setMessage('')
+  }
+
+  const handleClear = () => {
+    localStorage.removeItem(SPOTIFY_STORAGE_KEY)
+    setSpotifyUrl('')
+    setInputValue('')
+    setMessage('')
+  }
+
+  return (
+    <aside className="h-fit rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] p-4 shadow-[var(--shadow-card)] lg:sticky lg:top-6">
+      <div className="flex items-center gap-3">
+        <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#1DB954] text-lg font-bold text-white">♫</span>
+        <div><h2 className="font-semibold text-[var(--text-primary)]">Write with music</h2><p className="text-xs text-[var(--text-secondary)]">Keep a Spotify player nearby</p></div>
+      </div>
+      {spotifyUrl ? <iframe src={spotifyUrl} title="Spotify music player" className="mt-4 h-[352px] w-full rounded-xl border-0" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy" /> : <div className="mt-4 rounded-xl border border-dashed border-[var(--border)] px-4 py-8 text-center text-sm text-[var(--text-secondary)]">Add a Spotify link to start listening while you write.</div>}
+      <form onSubmit={handleSubmit} className="mt-4 space-y-2">
+        <label htmlFor="spotify-link" className="text-xs font-semibold text-[var(--text-primary)]">Spotify link</label>
+        <input id="spotify-link" value={inputValue} onChange={(event) => setInputValue(event.target.value)} placeholder="Paste a Spotify link" className="w-full rounded-xl border border-[var(--border)] bg-[var(--bg-input)] px-3 py-2 text-xs text-[var(--text-primary)] outline-none transition focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--accent-light)]" />
+        {message && <p className="text-xs text-red-500">{message}</p>}
+        <div className="flex gap-2"><button type="submit" className="flex-1 rounded-xl bg-[var(--btn-primary-bg)] px-3 py-2 text-xs font-semibold text-[var(--text-on-accent)] transition hover:bg-[var(--btn-primary-hover)]">Load player</button>{spotifyUrl && <button type="button" onClick={handleClear} className="rounded-xl border border-[var(--border)] px-3 py-2 text-xs text-[var(--text-secondary)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]">Clear</button>}</div>
+      </form>
+    </aside>
+  )
+}
 
 function PageEditor() {
   const { id } = useParams()
@@ -49,6 +107,7 @@ function PageEditor() {
       await blockService.update(block._id, {
         content: block.content,
         type: block.type,
+        properties: block.properties || {},
       })
       dispatch({ type: 'SET_STATUS', payload: 'idle' })
     } catch (err) {
@@ -100,8 +159,20 @@ function PageEditor() {
   }
 
   const handleTypeChange = (block, type) => {
-    const updatedBlock = { ...block, type }
+    // Media blocks require a URL or recording, so clear incompatible text when switching types.
+    const content = ['image', 'audio', 'youtube'].includes(type) ? '' : block.content
+    const properties = type === 'heading' ? { headingLevel: 'h2', color: 'default' } : type === 'text' ? { textStyle: 'normal', color: 'default' } : {}
+    const updatedBlock = { ...block, type, content, properties }
     dispatch({ type: 'UPDATE_BLOCK_TYPE', payload: { id: block._id, type } })
+    if (content !== block.content) dispatch({ type: 'UPDATE_BLOCK_CONTENT', payload: { id: block._id, content } })
+    dispatch({ type: 'UPDATE_BLOCK_PROPERTIES', payload: { id: block._id, properties } })
+    debouncedSave(block._id, updatedBlock)
+  }
+
+  // Persists presentation metadata separately so content remains simple searchable text.
+  const handlePropertiesChange = (block, properties) => {
+    const updatedBlock = { ...block, properties: { ...block.properties, ...properties } }
+    dispatch({ type: 'UPDATE_BLOCK_PROPERTIES', payload: { id: block._id, properties: updatedBlock.properties } })
     debouncedSave(block._id, updatedBlock)
   }
 
@@ -144,9 +215,11 @@ function PageEditor() {
   }
 
   const handleSlashSelect = (block, type) => {
-    const updatedBlock = { ...block, type, content: '' }
+    const properties = type === 'heading' ? { headingLevel: 'h2', color: 'default' } : type === 'text' ? { textStyle: 'normal', color: 'default' } : {}
+    const updatedBlock = { ...block, type, content: '', properties }
     dispatch({ type: 'UPDATE_BLOCK_TYPE', payload: { id: block._id, type } })
     dispatch({ type: 'UPDATE_BLOCK_CONTENT', payload: { id: block._id, content: '' } })
+    dispatch({ type: 'UPDATE_BLOCK_PROPERTIES', payload: { id: block._id, properties } })
     setSlashMenuFor(null)
     debouncedSave(block._id, updatedBlock)
     requestAnimationFrame(() => blockRefs.current[block._id]?.focus())
@@ -193,7 +266,10 @@ function PageEditor() {
   if (!page) return <h1 className="p-6 text-[var(--text-secondary)]">Page not found</h1>
 
   return (
-    <div className="max-w-3xl mx-auto p-6 bg-[var(--bg-card)] min-h-screen">
+    <div className="min-h-screen bg-[var(--bg)] p-4 sm:p-6">
+      <div className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-[280px_minmax(0,1fr)] lg:items-start">
+        <SpotifyPlayer />
+        <div className="min-h-screen bg-[var(--bg-card)] p-2 sm:p-4 lg:p-6">
       <div className="flex justify-between items-center mb-6">
         <button
           onClick={() => navigate('/dashboard')}
@@ -225,6 +301,7 @@ function PageEditor() {
               }}
               onContentChange={handleContentChange}
               onTypeChange={handleTypeChange}
+              onPropertiesChange={handlePropertiesChange}
               onDelete={(blockId) => setDeleteBlockConfirm(blockId)}
               onDragStart={handleDragStart}
               onDrop={handleDrop}
@@ -260,6 +337,8 @@ function PageEditor() {
         onConfirm={handleConfirmDeleteBlock}
         onCancel={() => setDeleteBlockConfirm(null)}
       />
+        </div>
+      </div>
     </div>
   )
 }

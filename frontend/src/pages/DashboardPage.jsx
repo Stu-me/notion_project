@@ -3,8 +3,11 @@ import { Link, useNavigate } from 'react-router-dom'
 import { workspaceService } from '../services/workspaceService'
 import { pageService } from '../services/pageService'
 import ConfirmModal from '../components/ConfirmModal'
+import { useAuth } from '../hooks/useAuth'
+import Icon from '../components/Icon'
 
 function DashboardPage() {
+  const { user } = useAuth()
   const [workspaces, setWorkspaces] = useState([])
   const [activeWorkspace, setActiveWorkspace] = useState(null)
   const [pages, setPages] = useState([])
@@ -123,13 +126,18 @@ function DashboardPage() {
   if (loading) return <h1 className="p-6 text-[var(--text-secondary)]">Loading...</h1>
 
   return (
-    <div className="bg-[var(--bg)] min-h-screen">
+    <div className="min-h-screen bg-[var(--bg)]">
+      <div className="mx-auto max-w-7xl p-4 sm:p-6">
+        <header className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div><p className="text-sm font-medium text-[var(--accent)]">YOUR WORKSPACE</p><h1 className="mt-1 text-3xl font-bold tracking-tight text-[var(--text-primary)]">Good to see you, {user?.name?.split(' ')[0] || 'there'}.</h1><p className="mt-2 text-sm text-[var(--text-secondary)]">Choose a workspace, then create and organize your pages.</p></div>
+          <Link to="/subscribe" className="inline-flex items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--bg-card)] px-4 py-2.5 text-sm font-semibold text-[var(--text-primary)] shadow-sm hover:border-[var(--accent)] hover:text-[var(--accent)]">Manage subscription</Link>
+        </header>
       
-      <div className="flex min-h-screen">
+      <div className="flex min-h-[calc(100vh-12rem)] flex-col overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--bg-card)] shadow-[var(--shadow-card)] md:flex-row">
 
         {/* Sidebar — workspaces */}
-        <div className="w-64 border-r border-[var(--border)] bg-[var(--bg-card)] p-4">
-          <h2 className="font-semibold mb-3 text-[var(--text-primary)]">Workspaces</h2>
+        <aside className="w-full shrink-0 border-b border-[var(--border)] bg-[var(--bg-card)] p-4 md:w-64 md:border-r md:border-b-0">
+          <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-[var(--text-primary)]"><Icon name="folder" className="h-4 w-4 text-[var(--accent)]" />Workspaces</h2>
 
           <form onSubmit={handleCreateWorkspace} className="mb-4">
             <input
@@ -139,17 +147,17 @@ function DashboardPage() {
               onChange={(e) => setNewWorkspaceName(e.target.value)}
               className="w-full p-2 text-sm border border-[var(--border)] rounded-xl text-[var(--text-primary)] placeholder-[var(--text-secondary)] outline-none focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--accent-light)] transition mb-2"
             />
-            <button type="submit" className="w-full bg-[var(--btn-primary-bg)] text-[var(--text-on-accent)] text-sm py-2 rounded-xl font-semibold hover:bg-[var(--btn-primary-hover)] transition">
-              + Add
+            <button type="submit" className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-[var(--btn-primary-bg)] py-2 text-sm font-semibold text-[var(--text-on-accent)] hover:bg-[var(--btn-primary-hover)]">
+              <Icon name="plus" className="h-4 w-4" />Add workspace
             </button>
           </form>
 
-          <ul className="space-y-1">
+          <ul className="flex gap-1 overflow-x-auto pb-1 md:block md:space-y-1">
             {workspaces.map((ws) => (
               <li
                 key={ws._id}
-                className={`flex justify-between items-center px-3 py-2 rounded-xl cursor-pointer text-sm transition ${
-                  activeWorkspace?._id === ws._id ? 'bg-[var(--bg)] font-medium text-[var(--text-primary)]' : 'text-[var(--text-secondary)] hover:bg-[var(--bg)] hover:text-[var(--text-primary)]'
+                className={`flex shrink-0 justify-between items-center px-3 py-2 rounded-lg cursor-pointer text-sm transition md:w-full ${
+                  activeWorkspace?._id === ws._id ? 'bg-[var(--accent-light)] font-medium text-[var(--accent)]' : 'text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]'
                 }`}
               >
                 <span onClick={() => selectWorkspace(ws)} className="flex-1">
@@ -171,23 +179,17 @@ function DashboardPage() {
               </li>
             ))}
           </ul>
-        </div>
+        </aside>
 
         {/* Main — pages */}
-        <div className="flex-1 p-8">
+        <div className="min-w-0 flex-1 p-5 sm:p-8">
           {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
 
-          <div className="flex items-center justify-end mb-6">
-            <Link to="/subscribe" className="text-sm rounded-xl border border-[var(--border)] px-4 py-2 text-[var(--text-secondary)] hover:text-[var(--accent)] hover:border-[var(--accent)] transition bg-[var(--bg-card)]">
-              Manage subscription
-            </Link>
-          </div>
-
           {!activeWorkspace ? (
-            <p className="text-[var(--text-secondary)]">Create or select a workspace to get started.</p>
+            <div className="grid min-h-72 place-items-center text-center"><div><span className="mx-auto grid h-12 w-12 place-items-center rounded-xl bg-[var(--accent-light)] text-[var(--accent)]"><Icon name="folder" /></span><h2 className="mt-4 font-semibold text-[var(--text-primary)]">Create your first workspace</h2><p className="mt-1 text-sm text-[var(--text-secondary)]">Workspaces keep related pages together.</p></div></div>
           ) : (
             <>
-              <h1 className="text-2xl font-bold mb-6 text-[var(--text-primary)]">{activeWorkspace.name}</h1>
+              <div className="mb-6"><p className="text-sm font-medium text-[var(--text-secondary)]">WORKSPACE</p><h2 className="mt-1 text-2xl font-bold text-[var(--text-primary)]">{activeWorkspace.name}</h2></div>
 
               <form onSubmit={handleCreatePage} className="flex gap-2 mb-8">
                 <input
@@ -197,18 +199,19 @@ function DashboardPage() {
                   onChange={(e) => setNewPageTitle(e.target.value)}
                   className="flex-1 p-2.5 border border-[var(--border)] rounded-xl text-[var(--text-primary)] placeholder-[var(--text-secondary)] outline-none focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--accent-light)] transition bg-[var(--bg-card)]"
                 />
-                <button type="submit" className="bg-[var(--accent)] text-[var(--text-on-accent)] px-5 rounded-xl text-sm font-semibold hover:bg-[var(--accent-hover)] transition">
-                  + Page
+                <button type="submit" className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--accent)] px-5 text-sm font-semibold text-[var(--text-on-accent)] hover:bg-[var(--accent-hover)]">
+                  <Icon name="plus" className="h-4 w-4" />Page
                 </button>
               </form>
 
               <div className="grid grid-cols-2 md:grid-cols-3 gap-5">
                 {pages.map((page) => (
-                  <div
+                  <article
                     key={page._id}
                     className="border border-[var(--border)] rounded-xl bg-[var(--bg-card)] p-5 hover:shadow-[var(--shadow-card)] cursor-pointer relative transition group"
                   >
                     <div onClick={() => navigate(`/page/${page._id}`)}>
+                      <Icon name="file" className="mb-5 h-5 w-5 text-[var(--accent)]" />
                       <p className="font-medium text-[var(--text-primary)]">{page.title}</p>
                     </div>
                     <button
@@ -224,7 +227,7 @@ function DashboardPage() {
                     >
                       ✕
                     </button>
-                  </div>
+                  </article>
                 ))}
               </div>
 
@@ -234,6 +237,7 @@ function DashboardPage() {
             </>
           )}
         </div>
+      </div>
       </div>
 
       <ConfirmModal

@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 require('dotenv').config()
 const app = express();
 
@@ -11,7 +12,8 @@ const errorHandler = require('./middlewares/errorHandlers');
 const requestTiming = require('./middlewares/requestTiming');
 
 
-app.use(express.json())
+// Allows a short audio recording upload while keeping normal JSON requests bounded.
+app.use(express.json({ limit: '5mb' }))
 app.use(cors())
 app.use(requestTiming)
 app.get('/',(req,res)=>{
@@ -24,6 +26,8 @@ app.use('/api/blocks',require('./routers/blocksRouters'));
 app.use('/api/payments', require('./routers/paymentRouters'));
 app.use('/api/admin', require('./routers/adminRouters'));
 app.use('/api/support', require('./routers/supportRouters'));
+app.use('/api/uploads', require('./routers/uploadRouters'));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 
 
