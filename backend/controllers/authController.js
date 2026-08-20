@@ -6,7 +6,7 @@ const jwt = require('jsonwebtoken')
 const sendEmail = require('../utils/sendEmail')
 const {userInputValidator,userLoginValidator} = require('../middlewares/userValidator');
 const { log } = require('console');
-const remeberTime = '30'
+const remeberTime = '30m'
 
 // will put in utility folder after checking the flow 
 
